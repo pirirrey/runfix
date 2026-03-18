@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Read(//Users/martinpaez/Proyectos/**)",
+      "Bash(npx create-next-app@latest WePlan --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --yes --package-name weplan)",
+      "Read(//private/tmp/**)",
+      "Bash(npx create-next-app@latest weplan --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest init --yes --base-color slate)",
+      "Bash(npx shadcn@latest init --yes)",
+      "Bash(npx shadcn@latest add button card dialog form input label table badge toast separator --yes)",
+      "Bash(npx shadcn@latest add sonner --yes)",
+      "Bash(npx shadcn@latest add button card dialog form input label table badge separator --yes)",
+      "Bash(npx shadcn@latest add select --yes)",
+      "Bash(/Users/martinpaez/Proyectos/WePlan/.env.example:*)",
+      "Bash(/Users/martinpaez/Proyectos/WePlan/.env.local:*)",
+      "Bash(npm run:*)",
+      "Bash(ls /Users/martinpaez/Proyectos/WePlan/node_modules/next/dist/server/require-hook*)",
+      "Bash(node -e \"require\\(''''/Users/martinpaez/Proyectos/WePlan/node_modules/next''''\\)\")",
+      "Bash(ls /Users/martinpaez/Proyectos/WePlan/node_modules/next/server/require-hook*)"
+    ]
+  }
+}
