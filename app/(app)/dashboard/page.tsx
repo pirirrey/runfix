@@ -19,5 +19,7 @@ export default async function DashboardPage() {
   if (profile?.role === "coach") redirect("/coach/teams");
   if (profile?.role === "runner") redirect("/runner/plans");
 
+  // Perfil no encontrado: cerrar sesión y volver al login
+  await supabase.auth.signOut();
   redirect("/login");
 }

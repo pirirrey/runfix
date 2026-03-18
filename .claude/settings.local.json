@@ -18,7 +18,9 @@
       "Bash(npm run:*)",
       "Bash(ls /Users/martinpaez/Proyectos/WePlan/node_modules/next/dist/server/require-hook*)",
       "Bash(node -e \"require\\(''''/Users/martinpaez/Proyectos/WePlan/node_modules/next''''\\)\")",
-      "Bash(ls /Users/martinpaez/Proyectos/WePlan/node_modules/next/server/require-hook*)"
+      "Bash(ls /Users/martinpaez/Proyectos/WePlan/node_modules/next/server/require-hook*)",
+      "Bash(npm show:*)",
+      "Bash(find /Users/martinpaez/Proyectos/WePlan/components -name *.tsx)"
     ]
   }
 }
