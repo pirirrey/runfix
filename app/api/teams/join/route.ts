@@ -23,12 +23,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Código inválido" }, { status: 400 });
   }
 
-  // Buscar equipo por código
-  const { data: team, error: teamError } = await supabase
-    .from("teams")
-    .select("id, name")
-    .eq("invite_code", parsed.data.invite_code.toUpperCase())
-    .single();
+  // Buscar equipo por código (función security definer para bypasear RLS)
+  const { data: teams, error: teamError } = await supabase
+    .rpc("get_team_by_invite_code", {
+      p_invite_code: parsed.data.invite_code,
+    });
+
+  const team = teams?.[0] ?? null;
 
   if (teamError || !team) {
     return NextResponse.json(
