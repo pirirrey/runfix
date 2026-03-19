@@ -20,7 +20,15 @@
       "Bash(node -e \"require\\(''''/Users/martinpaez/Proyectos/WePlan/node_modules/next''''\\)\")",
       "Bash(ls /Users/martinpaez/Proyectos/WePlan/node_modules/next/server/require-hook*)",
       "Bash(npm show:*)",
-      "Bash(find /Users/martinpaez/Proyectos/WePlan/components -name *.tsx)"
+      "Bash(find /Users/martinpaez/Proyectos/WePlan/components -name *.tsx)",
+      "Bash(curl -L \"https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=1600&q=80\" -o /Users/martinpaez/Proyectos/WePlan/public/images/hero.jpg)",
+      "Bash(curl -L \"https://images.unsplash.com/photo-1530143584546-02191bc84eb5?w=800&q=80\" -o /Users/martinpaez/Proyectos/WePlan/public/images/marathon.jpg)",
+      "Bash(curl -L \"https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800&q=80\" -o /Users/martinpaez/Proyectos/WePlan/public/images/trail.jpg)",
+      "Bash(curl -L \"https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&q=80\" -o /Users/martinpaez/Proyectos/WePlan/public/images/team.jpg)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/images/hero.jpg)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/images/marathon.jpg)",
+      "Bash(cat /Users/martinpaez/Proyectos/WePlan/app/\\\\\\(auth\\\\\\)/login/page.tsx)",
+      "Bash(cat /Users/martinpaez/Proyectos/WePlan/app/\\\\\\(auth\\\\\\)/signup/page.tsx)"
     ]
   }
 }

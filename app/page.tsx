@@ -2,51 +2,45 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const PHOTOS = [
-  {
-    src: "https://images.unsplash.com/photo-1530143584546-02191bc84eb5?w=800&q=80",
-    alt: "Corredores en maratón",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800&q=80",
-    alt: "Runner en trail de montaña",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&q=80",
-    alt: "Equipo de running",
-  },
+  { src: "/images/marathon.jpg", alt: "Corredores en maratón" },
+  { src: "/images/trail.jpg",    alt: "Runner en trail de montaña" },
+  { src: "/images/team.jpg",     alt: "Equipo de running" },
+];
+
+const FEATURES = [
+  { icon: "📋", title: "Planes por runner", desc: "Cada atleta recibe su plan mensual personalizado en PDF." },
+  { icon: "👥", title: "Gestión de equipos", desc: "Organizá múltiples equipos y controlá quién pertenece a cada uno." },
+  { icon: "🔒", title: "Acceso seguro", desc: "Los runners se unen con código de invitación y ven solo sus propios planes." },
 ];
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen flex flex-col">
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0a0a" }}>
+
       {/* Hero */}
-      <section className="relative flex items-center justify-center min-h-[70vh] overflow-hidden">
+      <section style={{ position: "relative", height: "70vh", overflow: "hidden" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=1600&q=80"
+          src="/images/hero.jpg"
           alt="Maratón de running"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
         />
-        <div className="absolute inset-0 bg-black/55" />
-
-        <div className="relative z-10 text-center text-white px-6 space-y-6 max-w-2xl">
-          <h1 className="text-5xl font-extrabold tracking-tight drop-shadow-lg">
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(10,10,10,0.85) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.5rem", padding: "1.5rem", textAlign: "center", color: "white" }}>
+          <div style={{ display: "inline-block", background: "rgba(163,230,53,0.15)", border: "1px solid rgba(163,230,53,0.4)", borderRadius: "2rem", padding: "0.3rem 1rem", fontSize: "0.8rem", color: "#a3e635", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>
+            Para equipos de running
+          </div>
+          <h1 style={{ fontSize: "3.5rem", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
             🏃 WePlan
           </h1>
-          <p className="text-xl text-white/90 drop-shadow">
-            Gestioná los planes de entrenamiento de tu equipo de running.
-            Subí PDFs mensuales para cada atleta y hacé que cada uno vea exactamente lo que necesita.
+          <p style={{ fontSize: "1.15rem", maxWidth: "36rem", opacity: 0.85, lineHeight: 1.6 }}>
+            Gestioná los planes de entrenamiento de tu equipo. Subí PDFs mensuales para cada atleta y hacé que cada uno vea exactamente lo que necesita.
           </p>
-          <div className="flex gap-4 justify-center pt-2">
-            <Button size="lg" asChild className="text-base px-8">
+          <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
+            <Button size="lg" asChild style={{ background: "#a3e635", color: "#000", fontWeight: 700 }}>
               <Link href="/login">Iniciar sesión</Link>
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              asChild
-              className="text-base px-8 bg-white/10 border-white text-white hover:bg-white/20"
-            >
+            <Button size="lg" variant="outline" asChild style={{ borderColor: "rgba(255,255,255,0.4)", color: "white", background: "rgba(255,255,255,0.08)" }}>
               <Link href="/signup">Registrarse</Link>
             </Button>
           </div>
@@ -54,22 +48,22 @@ export default function LandingPage() {
       </section>
 
       {/* Galería */}
-      <section className="bg-muted py-12 px-6">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">
+      <section style={{ background: "#111", padding: "4rem 1.5rem" }}>
+        <div style={{ maxWidth: "64rem", margin: "0 auto" }}>
+          <p style={{ color: "#a3e635", fontSize: "0.8rem", fontWeight: 600, textAlign: "center", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "0.75rem" }}>
+            Comunidad
+          </p>
+          <h2 style={{ fontSize: "1.8rem", fontWeight: 800, textAlign: "center", marginBottom: "2.5rem", color: "white" }}>
             Para corredores que van en serio
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
             {PHOTOS.map((photo) => (
-              <div
-                key={photo.src}
-                className="relative h-56 rounded-xl overflow-hidden shadow-md"
-              >
+              <div key={photo.src} style={{ position: "relative", height: "15rem", borderRadius: "1rem", overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.src}
                   alt={photo.alt}
-                  className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
                 />
               </div>
             ))}
@@ -78,31 +72,31 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-12 px-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-          <div className="space-y-2">
-            <div className="text-4xl">📋</div>
-            <h3 className="font-semibold text-lg">Planes por runner</h3>
-            <p className="text-muted-foreground text-sm">
-              Cada atleta recibe su plan mensual personalizado en PDF.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <div className="text-4xl">👥</div>
-            <h3 className="font-semibold text-lg">Gestión de equipos</h3>
-            <p className="text-muted-foreground text-sm">
-              Organizá múltiples equipos y controlá quién pertenece a cada uno.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <div className="text-4xl">🔒</div>
-            <h3 className="font-semibold text-lg">Acceso seguro</h3>
-            <p className="text-muted-foreground text-sm">
-              Los runners se unen con código de invitación y ven solo sus propios planes.
-            </p>
+      <section style={{ padding: "4rem 1.5rem", background: "#0a0a0a" }}>
+        <div style={{ maxWidth: "56rem", margin: "0 auto" }}>
+          <p style={{ color: "#a3e635", fontSize: "0.8rem", fontWeight: 600, textAlign: "center", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "0.75rem" }}>
+            Funcionalidades
+          </p>
+          <h2 style={{ fontSize: "1.8rem", fontWeight: 800, textAlign: "center", marginBottom: "3rem", color: "white" }}>
+            Todo lo que necesitás
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
+            {FEATURES.map((f) => (
+              <div key={f.title} style={{ background: "#161616", borderRadius: "1rem", padding: "1.75rem", border: "1px solid #222", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div style={{ fontSize: "2rem" }}>{f.icon}</div>
+                <h3 style={{ fontWeight: 700, fontSize: "1rem", color: "white" }}>{f.title}</h3>
+                <p style={{ color: "#888", fontSize: "0.875rem", lineHeight: 1.6 }}>{f.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer style={{ padding: "1.5rem", textAlign: "center", color: "#444", fontSize: "0.8rem", background: "#0a0a0a", borderTop: "1px solid #1a1a1a" }}>
+        © 2026 WePlan — Gestión de equipos de running
+      </footer>
+
     </main>
   );
 }
