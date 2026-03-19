@@ -26,6 +26,7 @@ export default function LandingPage() {
           src="https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=1600&q=80"
           alt="Maratón de running"
           fill
+          unoptimized
           className="object-cover object-center"
           priority
         />
@@ -71,6 +72,7 @@ export default function LandingPage() {
                   src={photo.src}
                   alt={photo.alt}
                   fill
+                  unoptimized
                   className="object-cover hover:scale-105 transition-transform duration-500"
                 />
               </div>
