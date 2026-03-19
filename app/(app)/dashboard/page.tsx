@@ -12,11 +12,14 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, status")
     .eq("id", user.id)
-    .single<{ role: string }>();
+    .single<{ role: string; status: string }>();
 
-  if (profile?.role === "coach") redirect("/coach/teams");
+  if (profile?.role === "superadmin") redirect("/superadmin/coaches");
+  if (profile?.role === "coach" && profile?.status === "pending")  redirect("/coach/pending");
+  if (profile?.role === "coach" && profile?.status === "rejected") redirect("/coach/rejected");
+  if (profile?.role === "coach")  redirect("/coach/teams");
   if (profile?.role === "runner") redirect("/runner/plans");
 
   // Perfil no encontrado: cerrar sesión y volver al login

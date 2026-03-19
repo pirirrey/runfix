@@ -16,11 +16,13 @@ export default async function CoachLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("id, role, status")
     .eq("id", user.id)
-    .single<{ id: string; role: string }>();
+    .single<{ id: string; role: string; status: string }>();
 
   if (profile?.role !== "coach") redirect("/runner/plans");
+  if (profile?.status === "pending")  redirect("/coach/pending");
+  if (profile?.status === "rejected") redirect("/coach/rejected");
 
   return <>{children}</>;
 }

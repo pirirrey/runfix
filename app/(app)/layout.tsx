@@ -19,7 +19,7 @@ export default async function AppLayout({
     .from("profiles")
     .select("role, full_name, email")
     .eq("id", user.id)
-    .single<{ role: "coach" | "runner"; full_name: string | null; email: string }>();
+    .single<{ role: "coach" | "runner" | "superadmin"; full_name: string | null; email: string }>();
 
   if (!profile) redirect("/login");
 

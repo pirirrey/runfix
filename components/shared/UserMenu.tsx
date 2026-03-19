@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 
 interface UserMenuProps {
   fullName: string | null;
@@ -22,14 +21,40 @@ export function UserMenu({ fullName, email }: UserMenuProps) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-muted/50">
-      <div className="min-w-0">
-        <p className="text-sm font-medium truncate">{fullName ?? email}</p>
-        <p className="text-xs text-muted-foreground truncate">{email}</p>
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "0.75rem",
+      padding: "0.75rem",
+      borderRadius: "0.625rem",
+      background: "#161616",
+      border: "1px solid #222",
+    }}>
+      <div style={{ minWidth: 0 }}>
+        <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {fullName ?? email}
+        </p>
+        <p style={{ fontSize: "0.7rem", color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {email}
+        </p>
       </div>
-      <Button variant="ghost" size="sm" onClick={signOut} className="shrink-0">
+      <button
+        onClick={signOut}
+        style={{
+          flexShrink: 0,
+          background: "transparent",
+          border: "1px solid #333",
+          borderRadius: "0.375rem",
+          padding: "0.3rem 0.6rem",
+          fontSize: "0.75rem",
+          color: "#888",
+          cursor: "pointer",
+          transition: "all 0.15s",
+        }}
+      >
         Salir
-      </Button>
+      </button>
     </div>
   );
 }
