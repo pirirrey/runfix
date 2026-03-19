@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 const PHOTOS = [
@@ -22,13 +21,11 @@ export default function LandingPage() {
     <main className="min-h-screen flex flex-col">
       {/* Hero */}
       <section className="relative flex items-center justify-center min-h-[70vh] overflow-hidden">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=1600&q=80"
           alt="Maratón de running"
-          fill
-          unoptimized
-          className="object-cover object-center"
-          priority
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-black/55" />
 
@@ -68,12 +65,11 @@ export default function LandingPage() {
                 key={photo.src}
                 className="relative h-56 rounded-xl overflow-hidden shadow-md"
               >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={photo.src}
                   alt={photo.alt}
-                  fill
-                  unoptimized
-                  className="object-cover hover:scale-105 transition-transform duration-500"
+                  className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
               </div>
             ))}
