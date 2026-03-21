@@ -61,7 +61,8 @@ export default async function RunnerHomePage() {
   // Generar signed URLs para logos
   const rows: CoachRow[] = [];
   for (const cr of coachRunners ?? []) {
-    const coach = cr.coach as CoachRow["coach"];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const coach = (cr as any).coach as CoachRow["coach"];
     let logo_url: string | null = null;
     if (coach.team_logo_path) {
       const { data } = await supabase.storage

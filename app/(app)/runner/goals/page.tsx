@@ -75,7 +75,8 @@ export default function RunnerGoalsPage() {
     if (!data) { setLoading(false); return; }
 
     // Signed URLs para altimetrías
-    const withUrls = await Promise.all(data.map(async (g: GoalRow) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const withUrls = await Promise.all(data.map(async (g: any) => {
       if (!g.distance?.altimetry_path) return g;
       const { data: su } = await supabase.storage.from("training-plans").createSignedUrl(g.distance.altimetry_path, 3600);
       return { ...g, distance: { ...g.distance, altimetryUrl: su?.signedUrl ?? null } };

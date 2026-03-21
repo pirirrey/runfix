@@ -65,13 +65,16 @@ export default function RunnerEventsPage() {
     if (!evData) { setLoading(false); return; }
 
     // Generar signed URLs
-    const withUrls = await Promise.all(evData.map(async (ev: EventRow) => {
-      const distancesWithUrls = await Promise.all(ev.race_event_distances.map(async (d) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const withUrls = await Promise.all(evData.map(async (ev: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const distancesWithUrls = await Promise.all(ev.race_event_distances.map(async (d: any) => {
         if (!d.altimetry_path) return { ...d, altimetryUrl: null };
         const { data } = await supabase.storage.from("training-plans").createSignedUrl(d.altimetry_path, 3600);
         return { ...d, altimetryUrl: data?.signedUrl ?? null };
       }));
-      const filesWithUrls = await Promise.all(ev.race_event_files.map(async (f) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const filesWithUrls = await Promise.all(ev.race_event_files.map(async (f: any) => {
         const { data } = await supabase.storage.from("training-plans").createSignedUrl(f.storage_path, 3600);
         return { ...f, signedUrl: data?.signedUrl ?? null };
       }));
