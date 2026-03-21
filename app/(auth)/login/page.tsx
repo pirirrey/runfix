@@ -15,7 +15,7 @@ export default function LoginPage() {
         />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 100%)" }} />
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "3rem", color: "white" }}>
-          <p style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: "0.5rem" }}>🏃 WePlan</p>
+          <img src="/images/runfix-dark.svg" alt="Runfix" style={{ height: "2.25rem", width: "auto" }} />
           <p style={{ fontSize: "1.05rem", opacity: 0.85, maxWidth: "22rem", lineHeight: 1.5 }}>
             Tu plan de entrenamiento, siempre disponible.
           </p>

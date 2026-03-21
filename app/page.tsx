@@ -30,9 +30,7 @@ export default function LandingPage() {
           <div style={{ display: "inline-block", background: "rgba(163,230,53,0.15)", border: "1px solid rgba(163,230,53,0.4)", borderRadius: "2rem", padding: "0.3rem 1rem", fontSize: "0.8rem", color: "#a3e635", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>
             Para equipos de running
           </div>
-          <h1 style={{ fontSize: "3.5rem", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-            🏃 WePlan
-          </h1>
+          <img src="/images/runfix-dark.svg" alt="Runfix" style={{ height: "4.5rem", width: "auto" }} />
           <p style={{ fontSize: "1.15rem", maxWidth: "36rem", opacity: 0.85, lineHeight: 1.6 }}>
             Gestioná los planes de entrenamiento de tu equipo. Subí PDFs mensuales para cada atleta y hacé que cada uno vea exactamente lo que necesita.
           </p>
@@ -94,7 +92,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer style={{ padding: "1.5rem", textAlign: "center", color: "#444", fontSize: "0.8rem", background: "#0a0a0a", borderTop: "1px solid #1a1a1a" }}>
-        © 2026 WePlan — Gestión de equipos de running
+        © 2026 Runfix — Gestión de equipos de running
       </footer>
 
     </main>

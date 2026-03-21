@@ -13,7 +13,6 @@ export default async function CoachTeamsPage() {
     id: string;
     name: string;
     description: string | null;
-    invite_code: string;
     created_at: string;
     team_pdf_path: string | null;
     team_memberships: { count: number }[];
@@ -21,7 +20,7 @@ export default async function CoachTeamsPage() {
 
   const { data: teams } = await supabase
     .from("teams")
-    .select("id, name, description, invite_code, created_at, team_pdf_path, team_memberships(count)")
+    .select("id, name, description, created_at, team_pdf_path, team_memberships(count)")
     .eq("coach_id", user.id)
     .order("created_at", { ascending: false })
     .returns<TeamWithCount[]>();
@@ -92,14 +91,9 @@ export default async function CoachTeamsPage() {
               return (
                 <div key={team.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
 
-                  {/* Info + código */}
+                  {/* Info */}
                   <Link href={`/coach/teams/${team.id}`} style={{ textDecoration: "none" }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.5rem" }}>
-                      <h2 style={{ color: "white", fontSize: "1.05rem", fontWeight: 700, margin: 0 }}>{team.name}</h2>
-                      <span style={{ background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.25)", borderRadius: "0.375rem", padding: "0.2rem 0.5rem", fontSize: "0.7rem", fontFamily: "monospace", color: "#a3e635", fontWeight: 700, flexShrink: 0, letterSpacing: "0.05em" }}>
-                        {team.invite_code}
-                      </span>
-                    </div>
+                    <h2 style={{ color: "white", fontSize: "1.05rem", fontWeight: 700, margin: "0 0 0.35rem 0" }}>{team.name}</h2>
                     {team.description && (
                       <p style={{ color: "#777", fontSize: "0.85rem", lineHeight: 1.5, margin: 0 }}>{team.description}</p>
                     )}

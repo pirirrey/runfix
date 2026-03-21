@@ -28,7 +28,23 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/images/hero.jpg)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/images/marathon.jpg)",
       "Bash(cat /Users/martinpaez/Proyectos/WePlan/app/\\\\\\(auth\\\\\\)/login/page.tsx)",
-      "Bash(cat /Users/martinpaez/Proyectos/WePlan/app/\\\\\\(auth\\\\\\)/signup/page.tsx)"
+      "Bash(cat /Users/martinpaez/Proyectos/WePlan/app/\\\\\\(auth\\\\\\)/signup/page.tsx)",
+      "Bash(cat /Users/martinpaez/Proyectos/WePlan/app/\\\\\\(app\\\\\\)/coach/teams/page.tsx)",
+      "Bash(xargs grep:*)",
+      "Bash(xargs cat:*)",
+      "Bash(cat /Users/martinpaez/Proyectos/WePlan/app/\\\\\\(app\\\\\\)/coach/teams/[teamId]/page.tsx)",
+      "Bash(cat /Users/martinpaez/Proyectos/WePlan/app/\\\\\\(app\\\\\\)/runner/plans/page.tsx)",
+      "Bash(curl -L \"https://images.unsplash.com/photo-1551698618-9d0da97a9f7e?w=1200&q=85&auto=format&fit=crop\" -o /Users/martinpaez/Proyectos/WePlan/public/images/marathon.jpg)",
+      "Bash(curl -L \"https://images.pexels.com/photos/1571442/pexels-photo-1571442.jpeg?auto=compress&cs=tinysrgb&w=1200\" -o /Users/martinpaez/Proyectos/WePlan/public/images/marathon.jpg)",
+      "Bash(curl -L \"https://images.pexels.com/photos/2403392/pexels-photo-2403392.jpeg?auto=compress&cs=tinysrgb&w=1200\" -o /Users/martinpaez/Proyectos/WePlan/public/images/marathon.jpg)",
+      "Bash(for id:*)",
+      "Bash(do echo:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ls /Users/martinpaez/Proyectos/WePlan/.env*)",
+      "Read(//Users/martinpaez/Downloads/**)",
+      "Bash(git add:*)"
     ]
   }
 }

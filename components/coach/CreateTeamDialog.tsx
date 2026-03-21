@@ -67,11 +67,13 @@ export function CreateTeamDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>+ Nuevo equipo</Button>
+        <Button style={{ background: "#a3e635", color: "#000", fontWeight: 700 }}>
+          + Nuevo equipo
+        </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent style={{ background: "#161616", border: "1px solid #2a2a2a", color: "white" }}>
         <DialogHeader>
-          <DialogTitle>Crear equipo</DialogTitle>
+          <DialogTitle style={{ color: "white" }}>Crear equipo</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -80,9 +82,13 @@ export function CreateTeamDialog() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre del equipo</FormLabel>
+                  <FormLabel style={{ color: "#ccc" }}>Nombre del equipo</FormLabel>
                   <FormControl>
-                    <Input placeholder="ej: Equipo Maratón 2026" {...field} />
+                    <Input
+                      placeholder="ej: Equipo Maratón 2026"
+                      style={{ background: "#1a1a1a", border: "1px solid #333", color: "white" }}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -93,9 +99,13 @@ export function CreateTeamDialog() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descripción (opcional)</FormLabel>
+                  <FormLabel style={{ color: "#ccc" }}>Descripción (opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="ej: Preparación para 42k" {...field} />
+                    <Input
+                      placeholder="ej: Preparación para 42k"
+                      style={{ background: "#1a1a1a", border: "1px solid #333", color: "white" }}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -105,11 +115,16 @@ export function CreateTeamDialog() {
               <Button
                 type="button"
                 variant="outline"
+                style={{ borderColor: "#333", color: "#aaa", background: "transparent" }}
                 onClick={() => setOpen(false)}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button
+                type="submit"
+                disabled={loading}
+                style={{ background: "#a3e635", color: "#000", fontWeight: 700 }}
+              >
                 {loading ? "Creando..." : "Crear"}
               </Button>
             </div>

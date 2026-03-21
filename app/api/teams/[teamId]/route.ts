@@ -21,11 +21,19 @@ export async function PATCH(
   if (team.coach_id !== user.id) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const body = await request.json();
-  const { general_notes, team_pdf_path } = body;
+  const { name, description, general_notes, team_pdf_path } = body;
+
+  if (name !== undefined && !String(name).trim()) {
+    return NextResponse.json({ error: "El nombre no puede estar vacío" }, { status: 400 });
+  }
+
+  const updatePayload: Record<string, unknown> = { general_notes, team_pdf_path };
+  if (name !== undefined) updatePayload.name = String(name).trim();
+  if (description !== undefined) updatePayload.description = description;
 
   const { error } = await supabase
     .from("teams")
-    .update({ general_notes, team_pdf_path })
+    .update(updatePayload)
     .eq("id", teamId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

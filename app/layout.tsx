@@ -9,7 +9,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "WePlan",
+  title: "Runfix",
   description: "Gestión de equipos de running",
 };
 

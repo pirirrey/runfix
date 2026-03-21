@@ -2,7 +2,7 @@ import { JoinTeamForm } from "@/components/runner/JoinTeamForm";
 
 export default function JoinTeamPage() {
   return (
-    <main className="p-8 flex justify-center">
+    <main style={{ padding: "3rem 2rem", display: "flex", justifyContent: "center" }}>
       <JoinTeamForm />
     </main>
   );

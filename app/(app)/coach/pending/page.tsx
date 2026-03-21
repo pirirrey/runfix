@@ -70,7 +70,7 @@ export default async function CoachPendingPage() {
             Cuenta en revisión
           </h1>
           <p style={{ color: "#888", fontSize: "0.95rem", lineHeight: 1.6 }}>
-            Tu solicitud como entrenador está siendo revisada por el equipo de WePlan. Te notificaremos cuando tu cuenta sea aprobada.
+            Tu solicitud como entrenador está siendo revisada por el equipo de Runfix. Te notificaremos cuando tu cuenta sea aprobada.
           </p>
         </div>
 

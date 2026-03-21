@@ -30,7 +30,7 @@ export default async function AppLayout({
         fullName={profile.full_name}
         email={profile.email}
       />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto" style={{ background: "#0a0a0a" }}>{children}</main>
     </div>
   );
 }

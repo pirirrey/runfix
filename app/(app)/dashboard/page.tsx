@@ -19,8 +19,8 @@ export default async function DashboardPage() {
   if (profile?.role === "superadmin") redirect("/superadmin/coaches");
   if (profile?.role === "coach" && profile?.status === "pending")  redirect("/coach/pending");
   if (profile?.role === "coach" && profile?.status === "rejected") redirect("/coach/rejected");
-  if (profile?.role === "coach")  redirect("/coach/teams");
-  if (profile?.role === "runner") redirect("/runner/plans");
+  if (profile?.role === "coach")  redirect("/coach/home");
+  if (profile?.role === "runner") redirect("/runner/home");
 
   // Perfil no encontrado: cerrar sesión y volver al login
   await supabase.auth.signOut();

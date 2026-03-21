@@ -8,13 +8,19 @@ interface SidebarProps {
 }
 
 const coachLinks = [
-  { href: "/coach/teams", label: "Mis equipos", icon: "👥" },
+  { href: "/coach/home",     label: "Inicio",        icon: "🏠" },
+  { href: "/coach/teams",    label: "Mis equipos",   icon: "👥" },
+  { href: "/coach/runners",  label: "Mis runners",   icon: "🏃" },
+  { href: "/coach/events",   label: "Eventos",       icon: "🏁" },
+  { href: "/coach/settings", label: "Perfil del team", icon: "⚙️" },
 ];
 
 const runnerLinks = [
-  { href: "/runner/plans", label: "Mis planes", icon: "📋" },
-  { href: "/runner/team", label: "Mi equipo", icon: "👥" },
-  { href: "/runner/join", label: "Unirse a equipo", icon: "➕" },
+  { href: "/runner/home",   label: "Inicio",           icon: "🏠" },
+  { href: "/runner/plans",  label: "Mis planes",       icon: "📋" },
+  { href: "/runner/events", label: "Eventos",          icon: "🏁" },
+  { href: "/runner/goals",  label: "Mis Objetivos",    icon: "🎯" },
+  { href: "/runner/join",   label: "Unirse a coach",   icon: "➕" },
 ];
 
 const superadminLinks = [
@@ -63,9 +69,8 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
       top: 0,
     }}>
       {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.25rem 0.5rem", marginBottom: "0.25rem" }}>
-        <span style={{ fontSize: "1.4rem" }}>🏃</span>
-        <span style={{ fontWeight: 900, fontSize: "1.15rem", color: "white", letterSpacing: "-0.02em" }}>WePlan</span>
+      <div style={{ padding: "0.25rem 0.5rem", marginBottom: "0.25rem" }}>
+        <img src="/images/runfix-dark.svg" alt="Runfix" style={{ height: "1.75rem", width: "auto" }} />
       </div>
 
       {/* Role badge */}
