@@ -32,7 +32,7 @@ export default function LandingPage() {
           </div>
           <img src="/images/runfix-dark.svg" alt="Runfix" style={{ height: "4.5rem", width: "auto" }} />
           <p style={{ fontSize: "1.15rem", maxWidth: "36rem", opacity: 0.85, lineHeight: 1.6 }}>
-            Gestioná los planes de entrenamiento de tu equipo. Subí PDFs mensuales para cada atleta y hacé que cada uno vea exactamente lo que necesita.
+            Porque entrenar en equipo es más que correr. Gestioná planes, seguí el progreso y mantené a tu equipo motivado desde un solo lugar.
           </p>
           <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
             <Button size="lg" asChild style={{ background: "#a3e635", color: "#000", fontWeight: 700 }}>
