@@ -442,7 +442,8 @@ function SignedLink({ path, supabase }: { path: string; supabase: ReturnType<typ
 
   useEffect(() => {
     supabase.storage.from("training-plans").createSignedUrl(path, 3600)
-      .then(({ data }) => setUrl(data?.signedUrl ?? null));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then(({ data }: { data: any }) => setUrl(data?.signedUrl ?? null));
   }, [path, supabase]);
 
   if (!url) return null;
