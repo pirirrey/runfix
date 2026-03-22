@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 
 type Member = {
   membershipId: string;
@@ -19,9 +20,26 @@ interface Props {
 
 export function RunnerNotesList({ teamId, members: initialMembers }: Props) {
   const [members, setMembers] = useState(initialMembers);
-  const [editing, setEditing] = useState<string | null>(null); // membershipId
+  const [editing, setEditing] = useState<string | null>(null);
   const [draftNote, setDraftNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<Member | null>(null);
+
+  async function doRemoveFromTeam(m: Member) {
+    setConfirmRemove(null);
+    setRemoving(m.membershipId);
+    const res = await fetch(`/api/coach/runners/${m.runnerId}/teams?team_id=${teamId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setMembers((prev) => prev.filter((x) => x.membershipId !== m.membershipId));
+      toast.success(`${m.name} fue removido del equipo`);
+    } else {
+      toast.error("Error al quitar al runner");
+    }
+    setRemoving(null);
+  }
 
   function startEdit(m: Member) {
     setEditing(m.membershipId);
@@ -90,8 +108,8 @@ export function RunnerNotesList({ teamId, members: initialMembers }: Props) {
                 <p style={{ color: "#555", fontSize: "0.75rem", margin: 0 }}>{m.email}</p>
               </div>
 
-              {/* Fecha + botón */}
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+              {/* Fecha + botones */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
                 <span style={{ color: "#444", fontSize: "0.72rem" }}>
                   {new Date(m.joinedAt).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}
                 </span>
@@ -104,16 +122,30 @@ export function RunnerNotesList({ teamId, members: initialMembers }: Props) {
                       borderRadius: "0.4rem",
                       padding: "0.3rem 0.7rem",
                       color: m.coachNotes ? "#a3e635" : "#666",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
+                      fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
                       display: "flex", alignItems: "center", gap: "0.35rem",
                     }}
                   >
                     <span>📝</span>
-                    <span>{m.coachNotes ? "Ver / editar" : "Agregar indicación"}</span>
+                    <span>{m.coachNotes ? "Ver / editar" : "Indicaciones"}</span>
                   </button>
                 )}
+                <button
+                  onClick={() => setConfirmRemove(m)}
+                  disabled={removing === m.membershipId}
+                  title="Quitar del equipo"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid #3a1a1a",
+                    borderRadius: "0.4rem",
+                    padding: "0.3rem 0.6rem",
+                    color: removing === m.membershipId ? "#555" : "#c05050",
+                    fontSize: "0.75rem", fontWeight: 600,
+                    cursor: removing === m.membershipId ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {removing === m.membershipId ? "..." : "Quitar"}
+                </button>
               </div>
             </div>
 
@@ -186,6 +218,17 @@ export function RunnerNotesList({ teamId, members: initialMembers }: Props) {
           </div>
         );
       })}
+
+      {confirmRemove && (
+        <ConfirmModal
+          title={`Quitar a ${confirmRemove.name}`}
+          body={`Dejará de ver los planes de este equipo.\n\nPodés volver a agregarlo desde la página del equipo en cualquier momento.`}
+          confirmLabel="Quitar del equipo"
+          variant="danger"
+          onConfirm={() => doRemoveFromTeam(confirmRemove)}
+          onCancel={() => setConfirmRemove(null)}
+        />
+      )}
     </div>
   );
 }

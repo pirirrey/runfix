@@ -16,11 +16,13 @@ const coachLinks = [
 ];
 
 const runnerLinks = [
-  { href: "/runner/home",   label: "Inicio",           icon: "🏠" },
-  { href: "/runner/plans",  label: "Mis planes",       icon: "📋" },
-  { href: "/runner/events", label: "Eventos",          icon: "🏁" },
-  { href: "/runner/goals",  label: "Mis Objetivos",    icon: "🎯" },
-  { href: "/runner/join",   label: "Unirse a coach",   icon: "➕" },
+  { href: "/runner/home",    label: "Inicio",           icon: "🏠" },
+  { href: "/runner/plans",   label: "Mis planes",       icon: "📋" },
+  { href: "/runner/events",  label: "Eventos",          icon: "🏁" },
+  { href: "/runner/goals",   label: "Mis Objetivos",    icon: "🎯" },
+  { href: "/runner/payments", label: "Mis Pagos",        icon: "💳" },
+  { href: "/runner/join",    label: "Unirse a coach",   icon: "➕" },
+  { href: "/runner/profile", label: "Mi Perfil",        icon: "👤" },
 ];
 
 const superadminLinks = [
@@ -89,7 +91,7 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+      <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.25rem", overflowY: "auto", minHeight: 0 }}>
         <p style={{ fontSize: "0.65rem", color: "#555", textTransform: "uppercase" as const, letterSpacing: "0.1em", fontWeight: 600, padding: "0 0.5rem", marginBottom: "0.25rem" }}>
           Menú
         </p>

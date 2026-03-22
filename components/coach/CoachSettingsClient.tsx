@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
+import { CoachPlanConfig } from "@/components/coach/CoachPlanConfig";
 
 type Profile = {
   id: string;
@@ -246,6 +247,10 @@ export function CoachSettingsClient({ profile }: { profile: Profile }) {
           </div>
         </form>
       </div>
+
+      {/* Planes de pago */}
+      <CoachPlanConfig />
+
     </div>
   );
 }

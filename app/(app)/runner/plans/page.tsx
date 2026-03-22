@@ -111,52 +111,69 @@ export default async function RunnerPlansPage() {
 
               {/* Plan vigente */}
               {active ? (
-                <Link href={`/runner/plans/${active.id}`} style={{ textDecoration: "none", display: "block", marginBottom: "0.75rem" }}>
-                  <div style={{
-                    background: "rgba(163,230,53,0.06)", border: "1px solid rgba(163,230,53,0.25)",
-                    borderRadius: "0.875rem", padding: "1.5rem", cursor: "pointer",
-                    transition: "border-color 0.15s",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
-                          <span style={{ background: "#a3e635", color: "#000", fontSize: "0.65rem", fontWeight: 800, padding: "0.15rem 0.6rem", borderRadius: "2rem", textTransform: "uppercase" }}>
-                            ✓ Vigente
-                          </span>
-                        </div>
-                        <p style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          📄 {active.file_name}
-                        </p>
-                        <p style={{ color: "#a3e635", fontSize: "0.8rem", margin: "0.4rem 0 0 0" }}>
-                          {formatDate(active.valid_from)}
-                          {active.valid_until ? ` → ${formatDate(active.valid_until)}` : " → indefinido"}
-                        </p>
-                        {active.notes && (
-                          <p style={{ color: "#666", fontSize: "0.8rem", fontStyle: "italic", margin: "0.35rem 0 0 0" }}>{active.notes}</p>
-                        )}
-                      </div>
-                      <div style={{ color: "#a3e635", fontSize: "0.85rem", fontWeight: 700, flexShrink: 0 }}>Ver →</div>
-                    </div>
-                  </div>
-                </Link>
-              ) : (
-                <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", padding: "1.5rem", marginBottom: "0.75rem", textAlign: "center" }}>
-                  <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>Tu entrenador aún no subió un plan vigente para este equipo.</p>
-                </div>
-              )}
+                <div style={{ marginBottom: "0.75rem", border: "1px solid rgba(163,230,53,0.25)", borderRadius: "0.875rem", overflow: "hidden" }}>
 
-              {/* Indicaciones personales del coach */}
-              {coachNotes && (
-                <div style={{
-                  background: "rgba(96,165,250,0.05)", border: "1px solid rgba(96,165,250,0.15)",
-                  borderRadius: "0.75rem", padding: "1rem 1.25rem", marginBottom: "0.75rem",
-                }}>
-                  <p style={{ color: "#60a5fa", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.5rem 0" }}>
-                    📝 Indicaciones de tu entrenador
-                  </p>
-                  <p style={{ color: "#aaa", fontSize: "0.85rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>
-                    {coachNotes}
-                  </p>
+                  {/* Parte superior: info del plan + link */}
+                  <Link href={`/runner/plans/${active.id}`} style={{ textDecoration: "none", display: "block" }}>
+                    <div style={{ background: "rgba(163,230,53,0.06)", padding: "1.25rem 1.5rem", cursor: "pointer" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.6rem" }}>
+                            <span style={{ background: "#a3e635", color: "#000", fontSize: "0.65rem", fontWeight: 800, padding: "0.15rem 0.6rem", borderRadius: "2rem", textTransform: "uppercase" }}>
+                              ✓ Vigente
+                            </span>
+                          </div>
+                          <p style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            📄 {active.file_name}
+                          </p>
+                          <p style={{ color: "#a3e635", fontSize: "0.8rem", margin: "0.35rem 0 0 0" }}>
+                            {formatDate(active.valid_from)}{active.valid_until ? ` → ${formatDate(active.valid_until)}` : " → indefinido"}
+                          </p>
+                        </div>
+                        <div style={{ color: "#a3e635", fontSize: "0.85rem", fontWeight: 700, flexShrink: 0 }}>Ver →</div>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Indicaciones al grupo */}
+                  {active.notes && (
+                    <div style={{ background: "rgba(163,230,53,0.03)", borderTop: "1px solid rgba(163,230,53,0.12)", padding: "0.875rem 1.5rem" }}>
+                      <p style={{ color: "#6b9e2a", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 0.35rem 0" }}>
+                        👥 Indicaciones al grupo
+                      </p>
+                      <p style={{ color: "#aaa", fontSize: "0.84rem", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
+                        {active.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Indicaciones personales */}
+                  {coachNotes && (
+                    <div style={{ background: "rgba(96,165,250,0.04)", borderTop: "1px solid rgba(96,165,250,0.15)", padding: "0.875rem 1.5rem" }}>
+                      <p style={{ color: "#60a5fa", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 0.35rem 0" }}>
+                        📝 Indicaciones personales
+                      </p>
+                      <p style={{ color: "#aaa", fontSize: "0.84rem", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
+                        {coachNotes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ border: "1px solid #1e1e1e", borderRadius: "0.875rem", marginBottom: "0.75rem", overflow: "hidden" }}>
+                  <div style={{ background: "#111", padding: "1.5rem", textAlign: "center" }}>
+                    <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>Tu entrenador aún no subió un plan vigente para este equipo.</p>
+                  </div>
+                  {coachNotes && (
+                    <div style={{ background: "rgba(96,165,250,0.04)", borderTop: "1px solid rgba(96,165,250,0.15)", padding: "0.875rem 1.5rem" }}>
+                      <p style={{ color: "#60a5fa", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 0.35rem 0" }}>
+                        📝 Indicaciones personales
+                      </p>
+                      <p style={{ color: "#aaa", fontSize: "0.84rem", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
+                        {coachNotes}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
