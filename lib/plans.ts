@@ -1,8 +1,19 @@
 export type PlanId = "starter" | "pro" | "elite";
 
-export const PLANS = [
+export type PlanFeature = { label: string; disabled?: boolean };
+
+export const PLANS: {
+  id: PlanId;
+  name: string;
+  badge: string | null;
+  price: string;
+  priceNote: string;
+  highlight: boolean;
+  limits: string;
+  features: PlanFeature[];
+}[] = [
   {
-    id: "starter" as PlanId,
+    id: "starter",
     name: "Starter",
     badge: null,
     price: "Gratis",
@@ -21,7 +32,7 @@ export const PLANS = [
     ],
   },
   {
-    id: "pro" as PlanId,
+    id: "pro",
     name: "Pro",
     badge: "Más popular",
     price: "$30.000",
@@ -40,7 +51,7 @@ export const PLANS = [
     ],
   },
   {
-    id: "elite" as PlanId,
+    id: "elite",
     name: "Elite",
     badge: null,
     price: "$50.000",

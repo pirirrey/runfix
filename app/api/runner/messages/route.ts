@@ -46,7 +46,7 @@ export async function GET() {
   // Armar mapa team_id → name
   const teamNames: Record<string, string> = {};
   for (const m of memberships) {
-    const t = m.teams as { id: string; name: string } | null;
+    const t = (Array.isArray(m.teams) ? m.teams[0] : m.teams) as { id: string; name: string } | null;
     if (t) teamNames[t.id] = t.name;
   }
 

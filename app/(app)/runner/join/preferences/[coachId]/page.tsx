@@ -13,6 +13,7 @@ type Session = {
   days: number[];
   start_time: string;
   notes: string | null;
+  sort_order?: number;
 };
 
 type Venue = {
@@ -44,7 +45,7 @@ export default function RunnerVenuePreferencesPage() {
     const coachRes = await fetch("/api/runner/coaches");
     if (coachRes.ok) {
       const coachData = await coachRes.json();
-      const match = (coachData.coaches ?? []).find((c: { id: string; coach: { team_name: string | null; full_name: string | null } }) => c.id === coachId || c.coach?.id === coachId);
+      const match = (coachData.coaches ?? []).find((c: { id: string; coach: { id: string; team_name: string | null; full_name: string | null } }) => c.id === coachId || c.coach?.id === coachId);
       if (match) {
         setCoachName(match.coach?.team_name || match.coach?.full_name || "Running Team");
       }

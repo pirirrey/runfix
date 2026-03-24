@@ -419,7 +419,7 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
                   <p style={{ color: "#7a6a3a", fontSize: "0.77rem", margin: 0, lineHeight: 1.5 }}>
                     {atLimit
                       ? <>Tu plan <strong style={{ color: "#aaa" }}>{planMeta.name}</strong> permite hasta {limits.maxRunners} runners. Para agregar más, <Link href="/coach/settings" style={{ color: "#f59e0b", textDecoration: "underline" }}>cambiá tu plan</Link>.</>
-                      : <>Te quedan {limits.maxRunners - activeRunners} lugar{limits.maxRunners - activeRunners !== 1 ? "es" : ""} en tu plan <strong style={{ color: "#aaa" }}>{planMeta.name}</strong>. <Link href="/coach/settings" style={{ color: "#f59e0b", textDecoration: "underline" }}>Ver planes</Link>.</>
+                      : <>Te quedan {(limits.maxRunners ?? 0) - activeRunners} lugar{(limits.maxRunners ?? 0) - activeRunners !== 1 ? "es" : ""} en tu plan <strong style={{ color: "#aaa" }}>{planMeta.name}</strong>. <Link href="/coach/settings" style={{ color: "#f59e0b", textDecoration: "underline" }}>Ver planes</Link>.</>
                     }
                   </p>
                 </div>
