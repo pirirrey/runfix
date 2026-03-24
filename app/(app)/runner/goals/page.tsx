@@ -30,6 +30,7 @@ type GoalRow = {
   id: string;
   distance_id: string;
   created_at: string;
+  achievement_id: string | null;
   distance: {
     id: string;
     label: string;
@@ -52,6 +53,9 @@ export default function RunnerGoalsPage() {
   const [goals, setGoals] = useState<GoalRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [convertingGoalId, setConvertingGoalId] = useState<string | null>(null);
+  const [convertForm, setConvertForm] = useState({ finish_time: "", position_general: "", total_general: "", position_category: "", total_category: "", category_name: "" });
+  const [convertSaving, setConvertSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,7 +65,7 @@ export default function RunnerGoalsPage() {
     const { data } = await supabase
       .from("runner_event_goals")
       .select(`
-        id, distance_id, created_at,
+        id, distance_id, created_at, achievement_id,
         distance:race_event_distances!runner_event_goals_distance_id_fkey(
           id, label, altimetry_path,
           event:race_events!race_event_distances_event_id_fkey(
@@ -88,6 +92,35 @@ export default function RunnerGoalsPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const convertToAchievement = async (g: GoalRow) => {
+    if (!g.distance?.event) return;
+    setConvertSaving(true);
+    const res = await fetch("/api/runner/achievements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        goal_id: g.id,
+        event_id: g.distance.event.id,
+        race_name: g.distance.event.name,
+        race_date: g.distance.event.start_date,
+        distance_label: g.distance.label,
+        finish_time:       convertForm.finish_time       || null,
+        position_general:  convertForm.position_general  || null,
+        total_general:     convertForm.total_general     || null,
+        position_category: convertForm.position_category || null,
+        total_category:    convertForm.total_category    || null,
+        category_name:     convertForm.category_name     || null,
+      }),
+    });
+    if (res.ok) {
+      toast.success("¡Logro registrado! Lo encontrás en Mis Logros.");
+      setConvertingGoalId(null);
+      setConvertForm({ finish_time: "", position_general: "", total_general: "", position_category: "", total_category: "", category_name: "" });
+      await load();
+    } else toast.error("Error al registrar el logro");
+    setConvertSaving(false);
+  };
+
   const removeGoal = async (distanceId: string) => {
     setRemoving(distanceId);
     const res = await fetch(`/api/runner/goals/${distanceId}`, { method: "DELETE" });
@@ -102,6 +135,14 @@ export default function RunnerGoalsPage() {
   if (loading) return <div style={{ padding: "3rem", color: "#666", textAlign: "center" }}>Cargando...</div>;
 
   return (
+    <div style={{
+      minHeight: "100vh",
+      backgroundImage: "url('/images/fondo-objetivos.png')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundColor: "rgba(0,0,0,0.75)",
+      backgroundBlendMode: "darken",
+    }}>
     <div style={{ padding: "2rem", maxWidth: "48rem", margin: "0 auto" }}>
       <div style={{ marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "white", margin: 0 }}>🎯 Mis Objetivos</h1>
@@ -134,8 +175,8 @@ export default function RunnerGoalsPage() {
             const typeColor = ev.race_type === "trail" ? "#a3e635" : "#60a5fa";
 
             return (
-              <div key={g.id} style={{
-                background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem",
+              <div key={g.id} style={{ display: "flex", flexDirection: "column", background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", overflow: "hidden" }}>
+              <div style={{
                 padding: "1.25rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem",
               }}>
                 <div style={{ flex: 1 }}>
@@ -170,22 +211,72 @@ export default function RunnerGoalsPage() {
                     )
                   }
                 </div>
-                <button
-                  onClick={() => removeGoal(g.distance_id)}
-                  disabled={removing === g.distance_id}
-                  style={{
-                    background: "transparent", border: "1px solid #2a1a1a", borderRadius: "0.4rem",
-                    color: "#774", padding: "0.35rem 0.75rem", cursor: "pointer", fontSize: "0.75rem",
-                    opacity: removing === g.distance_id ? 0.5 : 1, flexShrink: 0,
-                  }}
-                >
-                  Quitar
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flexShrink: 0 }}>
+                  {g.achievement_id ? (
+                    <a href="/runner/achievements" style={{ background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.25)", borderRadius: "0.4rem", color: "#a3e635", padding: "0.35rem 0.75rem", fontSize: "0.75rem", fontWeight: 700, textDecoration: "none", textAlign: "center" }}>
+                      🏆 Ver logro
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => { setConvertingGoalId(convertingGoalId === g.id ? null : g.id); setConvertForm({ finish_time: "", position_general: "", total_general: "", position_category: "", total_category: "", category_name: "" }); }}
+                      style={{ background: "rgba(163,230,53,0.08)", border: "1px solid rgba(163,230,53,0.2)", borderRadius: "0.4rem", color: "#a3e635", padding: "0.35rem 0.75rem", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}
+                    >
+                      🏆 Registrar resultado
+                    </button>
+                  )}
+                  <button
+                    onClick={() => removeGoal(g.distance_id)}
+                    disabled={removing === g.distance_id}
+                    style={{ background: "transparent", border: "1px solid #2a1a1a", borderRadius: "0.4rem", color: "#774", padding: "0.35rem 0.75rem", cursor: "pointer", fontSize: "0.75rem", opacity: removing === g.distance_id ? 0.5 : 1 }}
+                  >
+                    Quitar
+                  </button>
+                </div>
+              </div>
+
+              {/* Formulario conversión a logro */}
+              {convertingGoalId === g.id && (
+                <div style={{ borderTop: "1px solid #1a1a1a", padding: "1rem 1.5rem", background: "#0d0d0d" }}>
+                  <p style={{ color: "#a3e635", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.875rem" }}>
+                    Resultado — {g.distance?.label} {ev.name}
+                  </p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.65rem", marginBottom: "0.65rem" }}>
+                    {[
+                      { key: "finish_time",       label: "Tiempo",          placeholder: "3:45:22" },
+                      { key: "position_general",  label: "Pos. general",    placeholder: "42" },
+                      { key: "total_general",     label: "Total general",   placeholder: "850" },
+                      { key: "category_name",     label: "Categoría",       placeholder: "M35-39" },
+                      { key: "position_category", label: "Pos. categoría",  placeholder: "3" },
+                      { key: "total_category",    label: "Total categoría", placeholder: "45" },
+                    ].map(({ key, label, placeholder }) => (
+                      <div key={key}>
+                        <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.2rem" }}>{label}</label>
+                        <input
+                          value={convertForm[key as keyof typeof convertForm]}
+                          onChange={e => setConvertForm(prev => ({ ...prev, [key]: e.target.value }))}
+                          placeholder={placeholder}
+                          style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.4rem", padding: "0.4rem 0.6rem", color: "white", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                    <button onClick={() => setConvertingGoalId(null)} style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", padding: "0.4rem 0.875rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
+                      Cancelar
+                    </button>
+                    <button onClick={() => convertToAchievement(g)} disabled={convertSaving}
+                      style={{ background: convertSaving ? "#1a1a1a" : "#a3e635", border: "none", borderRadius: "0.4rem", color: convertSaving ? "#444" : "#000", padding: "0.4rem 1.1rem", fontSize: "0.78rem", fontWeight: 700, cursor: convertSaving ? "not-allowed" : "pointer" }}>
+                      {convertSaving ? "Guardando..." : "Confirmar logro"}
+                    </button>
+                  </div>
+                </div>
+              )}
               </div>
             );
           })}
         </div>
       )}
+    </div>
     </div>
   );
 }

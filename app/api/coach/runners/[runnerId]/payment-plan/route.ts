@@ -33,6 +33,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const plan_type: string = body.plan_type ?? "monthly";
   const amount: number | null = body.amount ?? null;
   const notes: string | null = body.notes ?? null;
+  const discount_pct: number = Math.min(100, Math.max(0, parseFloat(body.discount_pct ?? "0") || 0));
 
   if (!["monthly", "annual", "exempt"].includes(plan_type)) {
     return NextResponse.json({ error: "Tipo de plan inválido" }, { status: 400 });
@@ -46,9 +47,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
       plan_type,
       amount,
       notes,
+      discount_pct,
       updated_at: new Date().toISOString(),
     }, { onConflict: "coach_id,runner_id" });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, plan_type, amount, notes });
+  return NextResponse.json({ ok: true, plan_type, amount, notes, discount_pct });
 }

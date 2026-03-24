@@ -70,27 +70,63 @@ export default async function TeamDetailPage({
     .eq("coach_id", user.id)
     .returns<CoachRunnerRow[]>();
 
-  const poolRunners = (poolRows ?? [])
+  const poolRunnersBase = (poolRows ?? [])
     .map((row) => row.runner)
     .filter((r) => !memberIds.has(r.id));
+
+  // Obtener el equipo actual de cada runner del pool
+  type MembershipWithTeam = {
+    runner_id: string;
+    teams: { name: string } | null;
+  };
+  const poolIds = poolRunnersBase.map((r) => r.id);
+  const { data: poolMemberships } = poolIds.length > 0
+    ? await supabase
+        .from("team_memberships")
+        .select("runner_id, teams:team_id (name)")
+        .in("runner_id", poolIds)
+        .neq("team_id", teamId)
+        .returns<MembershipWithTeam[]>()
+    : { data: [] as MembershipWithTeam[] };
+
+  // Mapa: runnerId → team name
+  const runnerTeamMap = new Map<string, string>();
+  for (const m of poolMemberships ?? []) {
+    if (m.teams?.name) runnerTeamMap.set(m.runner_id, m.teams.name);
+  }
+
+  const poolRunners = poolRunnersBase.map((r) => ({
+    ...r,
+    current_team_name: runnerTeamMap.get(r.id) ?? null,
+  }));
 
   // Planes del equipo
   type TeamPlan = {
     id: string;
     valid_from: string;
     valid_until: string | null;
-    file_name: string;
+    storage_path: string | null;
+    file_name: string | null;
     file_size: number | null;
     notes: string | null;
     uploaded_at: string;
   };
   const { data: teamPlans } = await supabase
     .from("training_plans")
-    .select("id, valid_from, valid_until, file_name, file_size, notes, uploaded_at")
+    .select("id, valid_from, valid_until, storage_path, file_name, file_size, notes, uploaded_at")
     .eq("team_id", teamId)
     .is("runner_id", null)
     .order("valid_from", { ascending: false })
     .returns<TeamPlan[]>();
+
+  // Rutinas del equipo
+  type RoutineRow = { id: string; training_date: string; routine: string };
+  const { data: routines } = await supabase
+    .from("daily_routines")
+    .select("id, training_date, routine")
+    .eq("team_id", teamId)
+    .order("training_date", { ascending: true })
+    .returns<RoutineRow[]>();
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", padding: "2.5rem" }}>
@@ -114,7 +150,7 @@ export default async function TeamDetailPage({
         <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", overflow: "hidden" }}>
           <div style={{ padding: "1.25rem 1.75rem", borderBottom: "1px solid #1e1e1e" }}>
             <p style={{ color: "#a3e635", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
-              Datos del equipo
+              Perfil del equipo
             </p>
           </div>
           <div style={{ padding: "1.25rem 1.75rem" }}>
@@ -143,17 +179,8 @@ export default async function TeamDetailPage({
             </p>
           </div>
           <div style={{ padding: "1.5rem 1.75rem" }}>
-            <TeamPlansSection teamId={team.id} plans={teamPlans ?? []} />
+            <TeamPlansSection teamId={team.id} initialPlans={teamPlans ?? []} initialRoutines={routines ?? []} />
           </div>
-        </div>
-
-        {/* Panel: agregar runners desde pool */}
-        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", overflow: "hidden" }}>
-          <div style={{ padding: "1.25rem 1.75rem", borderBottom: "1px solid #1e1e1e" }}>
-            <p style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: 0 }}>Agregar runners al equipo</p>
-            <p style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.2rem" }}>Runners de tu pool que aún no están en este equipo</p>
-          </div>
-          <AddRunnerToTeamPanel teamId={team.id} poolRunners={poolRunners} />
         </div>
 
         {/* Runners actuales */}
@@ -167,7 +194,7 @@ export default async function TeamDetailPage({
             <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
               <p style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🏃</p>
               <p style={{ color: "#666", fontSize: "0.875rem" }}>No hay runners en este equipo todavía.</p>
-              <p style={{ color: "#444", fontSize: "0.8rem", marginTop: "0.3rem" }}>Agregá runners desde el panel de arriba.</p>
+              <p style={{ color: "#444", fontSize: "0.8rem", marginTop: "0.3rem" }}>Agregá runners desde el panel de abajo.</p>
             </div>
           ) : (
             <RunnerNotesList
@@ -182,6 +209,15 @@ export default async function TeamDetailPage({
               }))}
             />
           )}
+        </div>
+
+        {/* Panel: agregar runners desde pool */}
+        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", overflow: "hidden" }}>
+          <div style={{ padding: "1.25rem 1.75rem", borderBottom: "1px solid #1e1e1e" }}>
+            <p style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: 0 }}>Agregar runners al equipo</p>
+            <p style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.2rem" }}>Runners de tu pool que aún no están en este equipo</p>
+          </div>
+          <AddRunnerToTeamPanel teamId={team.id} poolRunners={poolRunners} />
         </div>
       </div>
     </div>

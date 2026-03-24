@@ -21,8 +21,9 @@ export default async function CoachLayout({
     .single<{ id: string; role: string; status: string }>();
 
   if (profile?.role !== "coach") redirect("/runner/plans");
-  if (profile?.status === "pending")  redirect("/coach/pending");
-  if (profile?.status === "rejected") redirect("/coach/rejected");
+  if (profile?.status === "pending")   redirect("/coach/pending");
+  if (profile?.status === "rejected")  redirect("/coach/rejected");
+  if (profile?.status === "suspended") redirect("/coach/suspended");
 
   return <>{children}</>;
 }

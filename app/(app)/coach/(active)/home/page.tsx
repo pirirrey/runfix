@@ -11,6 +11,7 @@ export default async function CoachHomePage() {
     id: string;
     full_name: string | null;
     email: string;
+    subscription_plan: string;
     team_name: string | null;
     team_logo_path: string | null;
     team_description: string | null;
@@ -19,7 +20,7 @@ export default async function CoachHomePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, email, team_name, team_logo_path, team_description, team_location")
+    .select("id, full_name, email, subscription_plan, team_name, team_logo_path, team_description, team_location")
     .eq("id", user.id)
     .single<CoachProfile>();
 
@@ -35,16 +36,17 @@ export default async function CoachHomePage() {
   }
 
   // Stats rápidas
-  const [{ count: teamsCount }, { count: runnersCount }, { count: eventsCount }] = await Promise.all([
+  const [{ count: teamsCount }, { count: runnersCount }, { count: venuesCount }, { count: eventsCount }] = await Promise.all([
     supabase.from("teams").select("*", { count: "exact", head: true }).eq("coach_id", user.id),
     supabase.from("coach_runners").select("*", { count: "exact", head: true }).eq("coach_id", user.id),
+    supabase.from("coach_venues").select("*", { count: "exact", head: true }).eq("coach_id", user.id),
     supabase.from("race_events").select("*", { count: "exact", head: true }).eq("coach_id", user.id),
   ]);
 
   return (
     <CoachHomeClient
       profile={{ ...profile, logoUrl }}
-      stats={{ teams: teamsCount ?? 0, runners: runnersCount ?? 0, events: eventsCount ?? 0 }}
+      stats={{ teams: teamsCount ?? 0, runners: runnersCount ?? 0, venues: venuesCount ?? 0, events: eventsCount ?? 0 }}
     />
   );
 }

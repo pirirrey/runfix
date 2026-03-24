@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { RunnerPaymentPanel } from "@/components/coach/RunnerPaymentPanel";
+import { RunnerVenuePicker } from "@/components/coach/RunnerVenuePicker";
 
 type Params = { runnerId: string };
 
@@ -58,7 +59,7 @@ export default async function RunnerProfileCoachView({
     .select("suspended, joined_at")
     .eq("coach_id", user.id)
     .eq("runner_id", runnerId)
-    .single();
+    .single<{ suspended: boolean; joined_at: string }>();
 
   if (!cr) notFound();
 
@@ -87,13 +88,20 @@ export default async function RunnerProfileCoachView({
     .order("expires_at", { ascending: false })
     .returns<{ id: string; file_name: string; storage_path: string; expires_at: string; uploaded_at: string }[]>();
 
+  // Configuración de precios del coach (para mostrar en el panel)
+  const { data: coachPricing } = await supabase
+    .from("profiles")
+    .select("plan_monthly_price, plan_monthly_due_day, plan_annual_price")
+    .eq("id", user.id)
+    .single<{ plan_monthly_price: number | null; plan_monthly_due_day: number | null; plan_annual_price: number | null }>();
+
   // Plan de pago y comprobantes
   const { data: paymentPlan } = await supabase
     .from("runner_payment_plans")
-    .select("plan_type, amount, notes")
+    .select("plan_type, notes, discount_pct")
     .eq("coach_id", user.id)
     .eq("runner_id", runnerId)
-    .single<{ plan_type: "monthly" | "annual" | "exempt"; amount: number | null; notes: string | null }>();
+    .single<{ plan_type: "monthly" | "annual" | "exempt"; notes: string | null; discount_pct: number | null }>();
 
   const { data: paymentReceipts } = await supabase
     .from("payment_receipts")
@@ -122,6 +130,24 @@ export default async function RunnerProfileCoachView({
     profile.email || "Runner";
 
   const age = profile.birth_date ? calcAge(profile.birth_date) : null;
+
+  // Sedes del coach + sedes asignadas al runner
+  const { data: venues } = await supabase
+    .from("coach_venues")
+    .select("id, name")
+    .eq("coach_id", user.id)
+    .order("sort_order")
+    .order("created_at")
+    .returns<{ id: string; name: string }[]>();
+
+  const { data: runnerVenues } = await supabase
+    .from("runner_venues")
+    .select("venue_id")
+    .eq("coach_id", user.id)
+    .eq("runner_id", runnerId)
+    .returns<{ venue_id: string }[]>();
+
+  const currentVenueIds = (runnerVenues ?? []).map(rv => rv.venue_id);
 
   // Certificado más reciente
   const latestCert = certsWithUrls[0] ?? null;
@@ -178,6 +204,21 @@ export default async function RunnerProfileCoachView({
           </p>
         </div>
       </div>
+
+      {/* Sede de entrenamiento */}
+      <section style={{
+        background: "#111", border: "1px solid #1e1e1e",
+        borderRadius: "0.875rem", padding: "1.5rem", marginBottom: "1.25rem",
+      }}>
+        <p style={{ color: "#444", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>
+          📍 Sede de entrenamiento
+        </p>
+        <RunnerVenuePicker
+          runnerId={runnerId}
+          venues={venues ?? []}
+          currentVenueIds={currentVenueIds}
+        />
+      </section>
 
       {/* Datos personales */}
       <section style={{
@@ -317,9 +358,14 @@ export default async function RunnerProfileCoachView({
       <RunnerPaymentPanel
         runnerId={runnerId}
         initialPlanType={paymentPlan?.plan_type ?? "monthly"}
-        initialAmount={paymentPlan?.amount ?? null}
         initialNotes={paymentPlan?.notes ?? null}
+        initialDiscountPct={paymentPlan?.discount_pct ?? 0}
         receipts={paymentReceipts ?? []}
+        coachPricing={{
+          monthly_price:   coachPricing?.plan_monthly_price   ?? null,
+          monthly_due_day: coachPricing?.plan_monthly_due_day ?? null,
+          annual_price:    coachPricing?.plan_annual_price    ?? null,
+        }}
       />
 
     </main>

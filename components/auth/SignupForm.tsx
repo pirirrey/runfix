@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { PLANS, PLAN_CONFIG, type PlanId } from "@/lib/plans";
 
 const schema = z.object({
   full_name: z.string().min(2, "Ingresá tu nombre"),
@@ -41,6 +42,7 @@ const roles = [
 export function SignupForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>("starter");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -58,7 +60,11 @@ export function SignupForm() {
       email: values.email,
       password: values.password,
       options: {
-        data: { full_name: values.full_name, role: values.role },
+        data: {
+        full_name: values.full_name,
+        role: values.role,
+        subscription_plan: values.role === "coach" ? selectedPlan : undefined,
+      },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
@@ -193,6 +199,82 @@ export function SignupForm() {
           lineHeight: 1.5,
         }}>
           💡 Una vez registrado, podés asociarte a uno o más entrenadores desde el panel principal.
+        </div>
+      )}
+
+      {/* Selector de plan — solo para coaches */}
+      {selectedRole === "coach" && (
+        <div>
+          <label style={{ ...labelStyle, marginBottom: "0.6rem", display: "block" }}>
+            Plan de suscripción
+          </label>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {PLANS.map((plan) => {
+              const cfg = PLAN_CONFIG[plan.id];
+              const isSelected = selectedPlan === plan.id;
+              return (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setSelectedPlan(plan.id)}
+                  style={{
+                    background: isSelected ? cfg.bg : "#1a1a1a",
+                    border: `1.5px solid ${isSelected ? cfg.color : "#2a2a2a"}`,
+                    borderRadius: "0.625rem",
+                    padding: "0.75rem 1rem",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.875rem",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {/* Radio visual */}
+                  <span style={{
+                    width: "1rem", height: "1rem", borderRadius: "50%", flexShrink: 0,
+                    border: `2px solid ${isSelected ? cfg.color : "#333"}`,
+                    background: isSelected ? cfg.color : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {isSelected && <span style={{ width: "0.35rem", height: "0.35rem", borderRadius: "50%", background: "#000", display: "block" }} />}
+                  </span>
+                  {/* Info */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ color: isSelected ? cfg.color : "white", fontWeight: 700, fontSize: "0.88rem" }}>
+                        {plan.name}
+                      </span>
+                      {plan.badge && (
+                        <span style={{
+                          background: cfg.bg, border: `1px solid ${cfg.color}`,
+                          color: cfg.color, borderRadius: "2rem",
+                          fontSize: "0.6rem", fontWeight: 700,
+                          padding: "0.05rem 0.45rem",
+                          textTransform: "uppercase" as const,
+                        }}>
+                          {plan.badge}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ color: "#555", fontSize: "0.72rem" }}>{plan.limits}</span>
+                  </div>
+                  {/* Precio */}
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <span style={{ color: isSelected ? cfg.color : "#666", fontWeight: 800, fontSize: "0.9rem" }}>
+                      {plan.price}
+                    </span>
+                    {plan.priceNote !== "sin límite de tiempo" && (
+                      <p style={{ color: "#444", fontSize: "0.62rem", margin: 0 }}>{plan.priceNote}</p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ color: "#444", fontSize: "0.72rem", marginTop: "0.5rem" }}>
+            Podés cambiar el plan en cualquier momento desde tu perfil.
+          </p>
         </div>
       )}
 

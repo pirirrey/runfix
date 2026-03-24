@@ -26,7 +26,7 @@ type Pricing = {
 
 type CoachData = {
   coach:   { id: string; full_name: string | null; team_name: string | null; joined_at: string | null };
-  plan:    { plan_type: PlanType; amount: number | null; notes: string | null };
+  plan:    { plan_type: PlanType; amount: number | null; notes: string | null; discount_pct: number | null };
   pricing: Pricing;
   receipts: Receipt[];
 };
@@ -222,13 +222,26 @@ export default function RunnerPaymentsPage() {
     setDeleting(null);
   }
 
+  const bgStyle: React.CSSProperties = {
+    minHeight: "100vh",
+    background: `
+      radial-gradient(ellipse at 50% 0%, rgba(163, 230, 53, 0.08) 0%, transparent 55%),
+      radial-gradient(circle at 90% 90%, rgba(96, 165, 250, 0.06) 0%, transparent 45%),
+      radial-gradient(circle 1px at center,rgba(255,255,255,0.07) 1px, transparent 0) 0 0 / 24px 24px,
+      #0a0a0a
+    `,
+  };
+
   if (loading) {
-    return <main style={{ padding: "2rem", maxWidth: "52rem", margin: "0 auto" }}>
-      <p style={{ color: "#555", textAlign: "center", marginTop: "4rem" }}>Cargando...</p>
-    </main>;
+    return <div style={bgStyle}>
+      <main style={{ padding: "2rem", maxWidth: "52rem", margin: "0 auto" }}>
+        <p style={{ color: "#555", textAlign: "center", marginTop: "4rem" }}>Cargando...</p>
+      </main>
+    </div>;
   }
 
   return (
+    <div style={bgStyle}>
     <main style={{ padding: "2rem", maxWidth: "52rem", margin: "0 auto" }}>
 
       <div style={{ marginBottom: "2rem" }}>
@@ -258,7 +271,7 @@ export default function RunnerPaymentsPage() {
                   <p style={{ color: "#555", fontSize: "0.78rem", margin: "0.2rem 0 0 0" }}>{item.coach.full_name}</p>
                 )}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
                 {/* Badge plan */}
                 <span style={{
                   background: planBg[pt], border: `1px solid ${planBorder[pt]}`,
@@ -268,25 +281,75 @@ export default function RunnerPaymentsPage() {
                   {planLabel[pt]}
                 </span>
 
-                {/* Precio vigente del coach */}
-                {pt === "monthly" && item.pricing.monthly_price != null && (
-                  <span style={{ color: "#888", fontSize: "0.75rem", fontWeight: 600 }}>
-                    ${item.pricing.monthly_price.toLocaleString("es-AR")} / mes
-                    {item.pricing.monthly_due_day != null && (
-                      <span style={{ color: "#555" }}>
-                        {" · "}vence el{" "}
-                        <span style={{ color: "#a3e635", fontWeight: 700 }}>
-                          {formatDueDate(item.pricing.monthly_due_day)}
+                {/* Precio con descuento opcional */}
+                {pt === "monthly" && item.pricing.monthly_price != null && (() => {
+                  const base = item.pricing.monthly_price;
+                  const disc = item.plan.discount_pct ?? 0;
+                  const final = Math.round(base * (1 - disc / 100));
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.2rem" }}>
+                      {disc > 0 ? (
+                        <>
+                          {/* Original tachado */}
+                          <span style={{ color: "#444", fontSize: "0.72rem", textDecoration: "line-through" }}>
+                            ${base.toLocaleString("es-AR")} / mes
+                          </span>
+                          {/* Descuento badge + precio final */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <span style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24", fontSize: "0.68rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: "2rem" }}>
+                              {disc}% off
+                            </span>
+                            <span style={{ color: "#a3e635", fontSize: "0.88rem", fontWeight: 800 }}>
+                              ${final.toLocaleString("es-AR")} / mes
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <span style={{ color: "#888", fontSize: "0.78rem", fontWeight: 600 }}>
+                          ${base.toLocaleString("es-AR")} / mes
                         </span>
-                      </span>
-                    )}
-                  </span>
-                )}
-                {pt === "annual" && item.pricing.annual_price != null && (
-                  <span style={{ color: "#888", fontSize: "0.75rem", fontWeight: 600 }}>
-                    ${item.pricing.annual_price.toLocaleString("es-AR")} / año
-                  </span>
-                )}
+                      )}
+                      {/* Fecha de vencimiento */}
+                      {item.pricing.monthly_due_day != null && (
+                        <span style={{ color: "#555", fontSize: "0.72rem" }}>
+                          vence el{" "}
+                          <span style={{ color: "#a3e635", fontWeight: 700 }}>
+                            {formatDueDate(item.pricing.monthly_due_day)}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {pt === "annual" && item.pricing.annual_price != null && (() => {
+                  const base = item.pricing.annual_price;
+                  const disc = item.plan.discount_pct ?? 0;
+                  const final = Math.round(base * (1 - disc / 100));
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.2rem" }}>
+                      {disc > 0 ? (
+                        <>
+                          <span style={{ color: "#444", fontSize: "0.72rem", textDecoration: "line-through" }}>
+                            ${base.toLocaleString("es-AR")} / año
+                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <span style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24", fontSize: "0.68rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: "2rem" }}>
+                              {disc}% off
+                            </span>
+                            <span style={{ color: "#a3e635", fontSize: "0.88rem", fontWeight: 800 }}>
+                              ${final.toLocaleString("es-AR")} / año
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <span style={{ color: "#888", fontSize: "0.78rem", fontWeight: 600 }}>
+                          ${base.toLocaleString("es-AR")} / año
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -391,13 +454,47 @@ export default function RunnerPaymentsPage() {
                           {/* Archivo */}
                           {formMethod !== "cash" && (
                             <div>
-                              <label style={{ display: "block", color: "#666", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
-                                Comprobante (PDF / imagen)
+                              <label style={{ display: "block", color: "#666", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.4rem" }}>
+                                Adjuntar comprobante
                               </label>
-                              <input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"
-                                onChange={(e) => setFormFile(e.target.files?.[0] ?? null)}
-                                style={{ color: "#aaa", fontSize: "0.82rem", width: "100%" }}
-                              />
+                              <label
+                                style={{
+                                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                                  gap: "0.4rem", padding: "1rem", borderRadius: "0.5rem", cursor: "pointer",
+                                  border: `1.5px dashed ${formFile ? "rgba(163,230,53,0.4)" : "#2a2a2a"}`,
+                                  background: formFile ? "rgba(163,230,53,0.05)" : "#1a1a1a",
+                                  transition: "all 0.15s",
+                                }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) setFormFile(f); }}
+                              >
+                                <input
+                                  type="file" accept=".pdf,.png,.jpg,.jpeg,.webp"
+                                  onChange={(e) => setFormFile(e.target.files?.[0] ?? null)}
+                                  style={{ display: "none" }}
+                                />
+                                {formFile ? (
+                                  <>
+                                    <span style={{ fontSize: "1.4rem" }}>📄</span>
+                                    <span style={{ color: "#a3e635", fontSize: "0.82rem", fontWeight: 700, textAlign: "center" }}>
+                                      {formFile.name}
+                                    </span>
+                                    <span style={{ color: "#555", fontSize: "0.72rem" }}>
+                                      {(formFile.size / 1024).toFixed(0)} KB · click para cambiar
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span style={{ fontSize: "1.4rem" }}>⬆️</span>
+                                    <span style={{ color: "#666", fontSize: "0.82rem", fontWeight: 600 }}>
+                                      Arrastrá o hacé click para adjuntar
+                                    </span>
+                                    <span style={{ color: "#444", fontSize: "0.72rem" }}>
+                                      PDF, PNG, JPG — máx. 10 MB
+                                    </span>
+                                  </>
+                                )}
+                              </label>
                             </div>
                           )}
 
@@ -433,6 +530,7 @@ export default function RunnerPaymentsPage() {
         );
       })}
     </main>
+    </div>
   );
 }
 

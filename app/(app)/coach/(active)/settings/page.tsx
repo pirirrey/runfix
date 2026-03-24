@@ -11,6 +11,7 @@ export default async function CoachSettingsPage() {
     id: string;
     full_name: string | null;
     email: string;
+    subscription_plan: string;
     team_name: string | null;
     team_logo_path: string | null;
     team_description: string | null;
@@ -19,12 +20,13 @@ export default async function CoachSettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, email, team_name, team_logo_path, team_description, team_location")
+    .select("id, full_name, email, subscription_plan, team_name, team_logo_path, team_description, team_location")
     .eq("id", user.id)
     .single<CoachProfile>();
 
   if (!profile) redirect("/login");
 
+  // Logo firmado
   let logoUrl: string | null = null;
   if (profile.team_logo_path) {
     const { data } = await supabase.storage

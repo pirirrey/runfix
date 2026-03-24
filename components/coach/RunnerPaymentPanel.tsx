@@ -18,12 +18,19 @@ type Receipt = {
   created_at: string;
 };
 
+type CoachPricing = {
+  monthly_price:   number | null;
+  monthly_due_day: number | null;
+  annual_price:    number | null;
+};
+
 interface Props {
   runnerId: string;
   initialPlanType: PlanType;
-  initialAmount: number | null;
   initialNotes: string | null;
+  initialDiscountPct: number;
   receipts: Receipt[];
+  coachPricing: CoachPricing;
 }
 
 const planOptions: { value: PlanType; label: string; icon: string }[] = [
@@ -54,17 +61,36 @@ function formatDate(dateStr: string) {
   });
 }
 
-export function RunnerPaymentPanel({ runnerId, initialPlanType, initialAmount, initialNotes, receipts }: Props) {
+export function RunnerPaymentPanel({ runnerId, initialPlanType, initialNotes, initialDiscountPct, receipts, coachPricing }: Props) {
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   const [planType, setPlanType] = useState<PlanType>(initialPlanType);
-  const [amount, setAmount] = useState(initialAmount?.toString() ?? "");
   const [notes, setNotes] = useState(initialNotes ?? "");
+  const [discountPct, setDiscountPct] = useState(initialDiscountPct > 0 ? initialDiscountPct.toString() : "");
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+
+  // Precio base según plan
+  function basePrice(): number | null {
+    if (planType === "monthly") return coachPricing.monthly_price;
+    if (planType === "annual")  return coachPricing.annual_price;
+    return null;
+  }
+
+  // Precio final aplicando descuento
+  function finalPrice(): number | null {
+    const base = basePrice();
+    if (base == null) return null;
+    const pct = parseFloat(discountPct) || 0;
+    return Math.round(base * (1 - pct / 100));
+  }
+
+  function priceSuffix() {
+    return planType === "monthly" ? "/ mes" : "/ año";
+  }
 
   async function savePlan() {
     setSaving(true);
@@ -73,7 +99,8 @@ export function RunnerPaymentPanel({ runnerId, initialPlanType, initialAmount, i
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         plan_type: planType,
-        amount: amount ? parseFloat(amount) : null,
+        amount: null,
+        discount_pct: parseFloat(discountPct) || 0,
         notes: notes.trim() || null,
       }),
     });
@@ -81,7 +108,8 @@ export function RunnerPaymentPanel({ runnerId, initialPlanType, initialAmount, i
       toast.success("Plan de pago actualizado");
       setDirty(false);
     } else {
-      toast.error("Error al guardar");
+      const err = await res.json().catch(() => ({}));
+      toast.error(err?.error ?? "Error al guardar el plan");
     }
     setSaving(false);
   }
@@ -121,20 +149,58 @@ export function RunnerPaymentPanel({ runnerId, initialPlanType, initialAmount, i
         ))}
       </div>
 
-      {/* Monto (no aplica para exento) */}
+      {/* Precio + descuento */}
       {planType !== "exempt" && (
-        <div style={{ marginBottom: "0.875rem" }}>
-          <label style={{ display: "block", color: "#666", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
-            Monto (opcional)
-          </label>
-          <div style={{ position: "relative", maxWidth: "12rem" }}>
-            <span style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: "#555", fontSize: "0.9rem" }}>$</span>
-            <input
-              type="number" min="0" step="0.01" value={amount}
-              onChange={(e) => { setAmount(e.target.value); setDirty(true); }}
-              placeholder="0"
-              style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", padding: "0.5rem 0.75rem 0.5rem 1.75rem", color: "white", fontSize: "0.875rem", outline: "none", boxSizing: "border-box" }}
-            />
+        <div style={{ marginBottom: "0.875rem", background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: "0.5rem", overflow: "hidden" }}>
+
+          {/* Precio base (read-only) */}
+          <div style={{ padding: "0.65rem 0.875rem", borderBottom: "1px solid #161616", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ color: "#555", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "5rem" }}>Precio base</span>
+            {basePrice() != null ? (
+              <span style={{ color: "#888", fontSize: "0.85rem", fontWeight: 600 }}>
+                ${basePrice()!.toLocaleString("es-AR")} {priceSuffix()}
+                {planType === "monthly" && coachPricing.monthly_due_day != null && (
+                  <span style={{ color: "#555", fontWeight: 400 }}> · vence día hábil {coachPricing.monthly_due_day}</span>
+                )}
+              </span>
+            ) : (
+              <a href="/coach/settings" style={{ color: "#444", fontSize: "0.78rem", textDecoration: "underline", fontStyle: "italic" }}>
+                Sin precio configurado
+              </a>
+            )}
+          </div>
+
+          {/* Descuento editable */}
+          <div style={{ padding: "0.65rem 0.875rem", borderBottom: "1px solid #161616", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <span style={{ color: "#555", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "5rem" }}>Descuento</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <input
+                type="number" min="0" max="100" step="1"
+                value={discountPct}
+                onChange={(e) => { setDiscountPct(e.target.value); setDirty(true); }}
+                placeholder="0"
+                style={{ width: "4rem", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.35rem", padding: "0.3rem 0.5rem", color: "white", fontSize: "0.85rem", outline: "none", textAlign: "center" }}
+              />
+              <span style={{ color: "#555", fontSize: "0.85rem" }}>%</span>
+              {parseFloat(discountPct) > 0 && (
+                <span style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24", fontSize: "0.7rem", fontWeight: 700, padding: "0.1rem 0.5rem", borderRadius: "2rem" }}>
+                  {discountPct}% off
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Precio final */}
+          <div style={{ padding: "0.65rem 0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ color: "#555", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", minWidth: "5rem" }}>A pagar</span>
+            {finalPrice() != null ? (
+              <span style={{ color: "#a3e635", fontSize: "0.95rem", fontWeight: 800 }}>
+                ${finalPrice()!.toLocaleString("es-AR")}
+                <span style={{ color: "#555", fontSize: "0.75rem", fontWeight: 400 }}> {priceSuffix()}</span>
+              </span>
+            ) : (
+              <span style={{ color: "#444", fontSize: "0.82rem" }}>—</span>
+            )}
           </div>
         </div>
       )}

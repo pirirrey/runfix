@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 
 type CoachPreview = {
@@ -17,8 +18,10 @@ type AssociatedCoach = {
     id: string;
     full_name: string | null;
     email: string;
+    status: string;
     team_name: string | null;
     team_location: string | null;
+    logo_url: string | null;
   };
 };
 
@@ -109,24 +112,74 @@ export function JoinTeamForm() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
-            {coaches.map((cr) => (
-              <div key={cr.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.75rem", padding: "1rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div style={{ width: "2.5rem", height: "2.5rem", borderRadius: "0.5rem", flexShrink: 0, background: "rgba(163,230,53,0.08)", border: "1px solid rgba(163,230,53,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>
-                  🎯
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: "white", fontWeight: 700, fontSize: "0.9rem", margin: 0 }}>
-                    {cr.coach.team_name || cr.coach.full_name || "Entrenador"}
-                  </p>
-                  {cr.coach.team_location && (
-                    <p style={{ color: "#666", fontSize: "0.75rem", margin: "0.1rem 0 0 0" }}>📍 {cr.coach.team_location}</p>
+            {coaches.map((cr) => {
+              const suspended = cr.coach.status === "suspended";
+              return (
+                <div key={cr.id} style={{
+                  background: suspended ? "rgba(251,146,60,0.03)" : "#111",
+                  border: `1px solid ${suspended ? "rgba(251,146,60,0.2)" : "#1e1e1e"}`,
+                  borderRadius: "0.75rem",
+                  overflow: "hidden",
+                }}>
+                  <div style={{ padding: "1rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+                    {/* Logo */}
+                    <div style={{ width: "2.5rem", height: "2.5rem", borderRadius: "0.5rem", flexShrink: 0, background: "rgba(163,230,53,0.08)", border: "1px solid rgba(163,230,53,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", opacity: suspended ? 0.5 : 1 }}>
+                      {cr.coach.logo_url
+                        ? <img src={cr.coach.logo_url} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <span>🏃</span>
+                      }
+                    </div>
+                    {/* Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <p style={{ color: suspended ? "#666" : "white", fontWeight: 700, fontSize: "0.9rem", margin: 0 }}>
+                          {cr.coach.team_name || cr.coach.full_name || "Entrenador"}
+                        </p>
+                        {suspended && (
+                          <span style={{
+                            background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.25)",
+                            borderRadius: "2rem", padding: "0.05rem 0.5rem",
+                            color: "#fb923c", fontSize: "0.65rem", fontWeight: 700,
+                            textTransform: "uppercase", letterSpacing: "0.06em",
+                          }}>
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
+                      {cr.coach.team_location && (
+                        <p style={{ color: "#555", fontSize: "0.75rem", margin: "0.1rem 0 0 0" }}>📍 {cr.coach.team_location}</p>
+                      )}
+                      <p style={{ color: "#333", fontSize: "0.68rem", margin: "0.15rem 0 0 0" }}>
+                        Desde {new Date(cr.joined_at).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
+                    {/* Botón preferencias — solo si activo */}
+                    {!suspended && (
+                      <Link
+                        href={`/runner/join/preferences/${cr.coach.id}`}
+                        style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "0.3rem", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", color: "#888", fontSize: "0.72rem", fontWeight: 600, padding: "0.35rem 0.7rem", textDecoration: "none", whiteSpace: "nowrap" }}
+                      >
+                        ⚙️ Preferencias
+                      </Link>
+                    )}
+                  </div>
+                  {/* Banner suspendido */}
+                  {suspended && (
+                    <div style={{
+                      borderTop: "1px solid rgba(251,146,60,0.15)",
+                      background: "rgba(251,146,60,0.05)",
+                      padding: "0.6rem 1.25rem",
+                      display: "flex", alignItems: "center", gap: "0.5rem",
+                    }}>
+                      <span style={{ fontSize: "0.8rem" }}>⚠️</span>
+                      <p style={{ color: "#7a5c3a", fontSize: "0.75rem", margin: 0, lineHeight: 1.4 }}>
+                        Este running team está temporalmente inactivo. Consultá con tu entrenador.
+                      </p>
+                    </div>
                   )}
                 </div>
-                <span style={{ color: "#555", fontSize: "0.72rem", whiteSpace: "nowrap" }}>
-                  Desde {new Date(cr.joined_at).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

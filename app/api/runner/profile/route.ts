@@ -17,6 +17,12 @@ export async function PATCH(req: NextRequest) {
     if (key in body) updates[key] = body[key] ?? null;
   }
 
+  // Sincronizar full_name con first_name + last_name para que la home lo refleje
+  const firstName = (updates.first_name as string | null) ?? "";
+  const lastName  = (updates.last_name  as string | null) ?? "";
+  const fullName  = [firstName, lastName].filter(Boolean).join(" ").trim();
+  if (fullName) updates.full_name = fullName;
+
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });

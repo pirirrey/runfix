@@ -11,6 +11,7 @@ type CoachRow = {
   coach: {
     id: string;
     full_name: string | null;
+    status: string;
     team_name: string | null;
     team_logo_path: string | null;
     team_location: string | null;
@@ -37,7 +38,7 @@ export default async function RunnerHomePage() {
       id,
       joined_at,
       coach:profiles!coach_runners_coach_id_fkey(
-        id, full_name, team_name, team_logo_path, team_location, team_description
+        id, full_name, status, team_name, team_logo_path, team_location, team_description
       )
     `)
     .eq("runner_id", user.id)
@@ -134,93 +135,142 @@ export default async function RunnerHomePage() {
         {rows.map((cr) => {
           const displayName = cr.coach.team_name || cr.coach.full_name || "Running Team";
           const hasTeams = cr.teams.length > 0;
+          const suspended = cr.coach.status === "suspended";
 
           return (
             <div key={cr.id} style={{
-              background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem",
+              background: suspended ? "rgba(251,146,60,0.03)" : "#111",
+              border: `1px solid ${suspended ? "rgba(251,146,60,0.2)" : "#1e1e1e"}`,
+              borderRadius: "1rem",
               overflow: "hidden",
             }}>
               {/* Header del team */}
               <div style={{
                 padding: "1.25rem 1.5rem",
                 display: "flex", alignItems: "center", gap: "1rem",
-                borderBottom: "1px solid #1a1a1a",
+                borderBottom: `1px solid ${suspended ? "rgba(251,146,60,0.1)" : "#1a1a1a"}`,
               }}>
                 {cr.logo_url ? (
                   <img
                     src={cr.logo_url}
                     alt={displayName}
-                    style={{ width: "3.5rem", height: "3.5rem", borderRadius: "0.625rem", objectFit: "cover", flexShrink: 0 }}
+                    style={{ width: "3.5rem", height: "3.5rem", borderRadius: "0.625rem", objectFit: "cover", flexShrink: 0, opacity: suspended ? 0.5 : 1 }}
                   />
                 ) : (
                   <div style={{
                     width: "3.5rem", height: "3.5rem", borderRadius: "0.625rem", flexShrink: 0,
                     background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.2)",
                     display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem",
+                    opacity: suspended ? 0.5 : 1,
                   }}>
                     🎯
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: "white", fontWeight: 800, fontSize: "1rem", margin: 0 }}>
-                    {displayName}
-                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                    <p style={{ color: suspended ? "#666" : "white", fontWeight: 800, fontSize: "1rem", margin: 0 }}>
+                      {displayName}
+                    </p>
+                    {suspended && (
+                      <span style={{
+                        background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.25)",
+                        borderRadius: "2rem", padding: "0.1rem 0.55rem",
+                        color: "#fb923c", fontSize: "0.65rem", fontWeight: 700,
+                        textTransform: "uppercase" as const, letterSpacing: "0.06em",
+                      }}>
+                        Inactivo
+                      </span>
+                    )}
+                  </div>
                   {cr.coach.team_location && (
-                    <p style={{ color: "#666", fontSize: "0.75rem", margin: "0.2rem 0 0 0" }}>
+                    <p style={{ color: "#555", fontSize: "0.75rem", margin: "0.2rem 0 0 0" }}>
                       📍 {cr.coach.team_location}
                     </p>
                   )}
                 </div>
-                <span style={{
-                  background: "rgba(96,165,250,0.1)", color: "#60a5fa",
-                  border: "1px solid rgba(96,165,250,0.2)",
-                  borderRadius: "99px", padding: "0.25rem 0.75rem",
-                  fontSize: "0.7rem", fontWeight: 700, whiteSpace: "nowrap",
-                }}>
-                  Miembro
-                </span>
-              </div>
-
-              {/* Grupos de entrenamiento */}
-              <div style={{ padding: "1.25rem 1.5rem" }}>
-                <p style={{ color: "#555", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.75rem" }}>
-                  Grupos de entrenamiento
-                </p>
-
-                {hasTeams ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    {cr.teams.map((t) => (
-                      <div key={t.id} style={{
-                        background: "#0f0f0f", border: "1px solid #1e1e1e",
-                        borderRadius: "0.5rem", padding: "0.625rem 0.875rem",
-                        display: "flex", alignItems: "center", gap: "0.625rem",
-                      }}>
-                        <span style={{ fontSize: "0.9rem" }}>👥</span>
-                        <span style={{ color: "#ddd", fontSize: "0.875rem", fontWeight: 600 }}>{t.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{
-                    background: "#0f0f0f", border: "1px dashed #2a2a2a",
-                    borderRadius: "0.5rem", padding: "1rem",
-                    display: "flex", alignItems: "center", gap: "0.75rem",
+                {!suspended ? (
+                  <span style={{
+                    background: "rgba(96,165,250,0.1)", color: "#60a5fa",
+                    border: "1px solid rgba(96,165,250,0.2)",
+                    borderRadius: "99px", padding: "0.25rem 0.75rem",
+                    fontSize: "0.7rem", fontWeight: 700, whiteSpace: "nowrap" as const,
                   }}>
-                    <span style={{ fontSize: "1.25rem" }}>⏳</span>
-                    <div>
-                      <p style={{ color: "#666", fontSize: "0.82rem", fontWeight: 600, margin: 0 }}>
-                        Pendiente de asignación
-                      </p>
-                      <p style={{ color: "#444", fontSize: "0.75rem", margin: "0.15rem 0 0 0" }}>
-                        Tu entrenador todavía no te asignó a ningún grupo
-                      </p>
-                    </div>
-                  </div>
+                    Miembro
+                  </span>
+                ) : (
+                  <span style={{
+                    background: "rgba(251,146,60,0.08)", color: "#fb923c",
+                    border: "1px solid rgba(251,146,60,0.2)",
+                    borderRadius: "99px", padding: "0.25rem 0.75rem",
+                    fontSize: "0.7rem", fontWeight: 700, whiteSpace: "nowrap" as const,
+                  }}>
+                    Inactivo
+                  </span>
                 )}
               </div>
 
-              {/* Descripción si existe */}
-              {cr.coach.team_description && (
+              {/* Banner de suspensión */}
+              {suspended && (
+                <div style={{
+                  background: "rgba(251,146,60,0.05)",
+                  borderBottom: "1px solid rgba(251,146,60,0.1)",
+                  padding: "0.875rem 1.5rem",
+                  display: "flex", alignItems: "flex-start", gap: "0.75rem",
+                }}>
+                  <span style={{ fontSize: "1rem", flexShrink: 0 }}>⚠️</span>
+                  <div>
+                    <p style={{ color: "#fb923c", fontWeight: 700, fontSize: "0.82rem", margin: "0 0 0.15rem 0" }}>
+                      Running team temporalmente inactivo
+                    </p>
+                    <p style={{ color: "#6b5a48", fontSize: "0.77rem", margin: 0, lineHeight: 1.5 }}>
+                      Este equipo no está disponible en este momento. Consultá con tu entrenador para más información.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Grupos de entrenamiento — solo si activo */}
+              {!suspended && (
+                <div style={{ padding: "1.25rem 1.5rem" }}>
+                  <p style={{ color: "#555", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.75rem" }}>
+                    Grupos de entrenamiento
+                  </p>
+
+                  {hasTeams ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      {cr.teams.map((t) => (
+                        <div key={t.id} style={{
+                          background: "#0f0f0f", border: "1px solid #1e1e1e",
+                          borderRadius: "0.5rem", padding: "0.625rem 0.875rem",
+                          display: "flex", alignItems: "center", gap: "0.625rem",
+                        }}>
+                          <span style={{ fontSize: "0.9rem" }}>👥</span>
+                          <span style={{ color: "#ddd", fontSize: "0.875rem", fontWeight: 600 }}>{t.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{
+                      background: "#0f0f0f", border: "1px dashed #2a2a2a",
+                      borderRadius: "0.5rem", padding: "1rem",
+                      display: "flex", alignItems: "center", gap: "0.75rem",
+                    }}>
+                      <span style={{ fontSize: "1.25rem" }}>⏳</span>
+                      <div>
+                        <p style={{ color: "#666", fontSize: "0.82rem", fontWeight: 600, margin: 0 }}>
+                          Pendiente de asignación
+                        </p>
+                        <p style={{ color: "#444", fontSize: "0.75rem", margin: "0.15rem 0 0 0" }}>
+                          Tu entrenador todavía no te asignó a ningún grupo
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Descripción si existe y está activo */}
+              {!suspended && cr.coach.team_description && (
                 <div style={{
                   padding: "0 1.5rem 1.25rem",
                   borderTop: "1px solid #1a1a1a",

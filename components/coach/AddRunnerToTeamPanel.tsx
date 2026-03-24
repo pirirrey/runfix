@@ -8,6 +8,7 @@ type PoolRunner = {
   id: string;
   full_name: string | null;
   email: string;
+  current_team_name: string | null;
 };
 
 interface Props {
@@ -66,7 +67,26 @@ export function AddRunnerToTeamPanel({ teamId, poolRunners }: Props) {
             <p style={{ color: "#ccc", fontSize: "0.875rem", fontWeight: 600, margin: 0 }}>
               {runner.full_name || "Sin nombre"}
             </p>
-            <p style={{ color: "#666", fontSize: "0.78rem", margin: 0 }}>{runner.email}</p>
+            <p style={{ color: "#666", fontSize: "0.78rem", margin: "0.1rem 0 0 0" }}>{runner.email}</p>
+            {runner.current_team_name ? (
+              <span style={{
+                display: "inline-block", marginTop: "0.3rem",
+                background: "rgba(163,230,53,0.07)", border: "1px solid rgba(163,230,53,0.2)",
+                borderRadius: "2rem", padding: "0.1rem 0.55rem",
+                color: "#7aad28", fontSize: "0.7rem", fontWeight: 600,
+              }}>
+                📋 {runner.current_team_name}
+              </span>
+            ) : (
+              <span style={{
+                display: "inline-block", marginTop: "0.3rem",
+                background: "rgba(255,255,255,0.03)", border: "1px solid #2a2a2a",
+                borderRadius: "2rem", padding: "0.1rem 0.55rem",
+                color: "#444", fontSize: "0.7rem", fontWeight: 600,
+              }}>
+                Sin equipo
+              </span>
+            )}
           </div>
           <button
             onClick={() => handleAdd(runner.id)}

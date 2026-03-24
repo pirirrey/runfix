@@ -1,25 +1,37 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { RunnerPlanCard, RunnerMonthData } from "@/components/runner/RunnerPlanCard";
+
+/* ── Helpers ──────────────────────────────────────────────── */
+
+function currentMonthKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthLabel(key: string) {
+  const [y, m] = key.split("-").map(Number);
+  const label = new Date(y, m - 1, 1).toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("es-AR", {
+    day: "numeric", month: "short", year: "numeric",
+  });
 }
 
-function isActive(validFrom: string, validUntil: string | null): boolean {
-  const today = new Date(); today.setHours(0,0,0,0);
-  const from = new Date(validFrom + "T00:00:00");
-  const until = validUntil ? new Date(validUntil + "T00:00:00") : null;
-  return from <= today && (!until || until >= today);
-}
+/* ── Page ─────────────────────────────────────────────────── */
 
 export default async function RunnerPlansPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Equipos del runner (vía membresías, incluyendo notas del coach)
+  const curKey = currentMonthKey();
+
+  // Equipos del runner
   type MembershipRow = {
     team_id: string;
     coach_notes: string | null;
@@ -31,25 +43,39 @@ export default async function RunnerPlansPage() {
     .eq("runner_id", user.id)
     .returns<MembershipRow[]>();
 
-  const teams = (memberships ?? []).map((m) => ({ ...m.teams, coachNotes: m.coach_notes }));
+  const rawTeams = (memberships ?? []).map((m) => ({ ...m.teams, coachNotes: m.coach_notes }));
+
+  // Obtener status de cada coach
+  const coachIds = [...new Set(rawTeams.map((t) => t.coach_id))];
+  type CoachStatusRow = { id: string; status: string };
+  let coachStatusMap: Record<string, string> = {};
+  if (coachIds.length > 0) {
+    const { data: coachProfiles } = await supabase
+      .from("profiles")
+      .select("id, status")
+      .in("id", coachIds)
+      .returns<CoachStatusRow[]>();
+    coachStatusMap = Object.fromEntries((coachProfiles ?? []).map((c) => [c.id, c.status]));
+  }
+
+  const teams = rawTeams.map((t) => ({ ...t, coachStatus: coachStatusMap[t.coach_id] ?? "approved" }));
   const teamIds = teams.map((t) => t.id);
 
-  // Planes de esos equipos (sin runner_id = planes de equipo)
+  // Planes de los equipos (todos, no solo activos)
   type PlanRow = {
     id: string;
     team_id: string;
     valid_from: string;
     valid_until: string | null;
     file_name: string;
+    storage_path: string | null;
     notes: string | null;
-    uploaded_at: string;
   };
-
   let plans: PlanRow[] = [];
   if (teamIds.length > 0) {
     const { data } = await supabase
       .from("training_plans")
-      .select("id, team_id, valid_from, valid_until, file_name, notes, uploaded_at")
+      .select("id, team_id, valid_from, valid_until, file_name, storage_path, notes")
       .in("team_id", teamIds)
       .is("runner_id", null)
       .order("valid_from", { ascending: false })
@@ -57,26 +83,82 @@ export default async function RunnerPlansPage() {
     plans = data ?? [];
   }
 
-  // Agrupar planes por equipo
-  const grouped = teams.map((team) => {
-    const teamPlans = plans.filter((p) => p.team_id === team.id);
-    const active = teamPlans.find((p) => isActive(p.valid_from, p.valid_until));
-    const history = teamPlans.filter((p) => p.id !== active?.id);
-    return { team, active, history, coachNotes: team.coachNotes };
-  });
+  // Rutinas de los equipos (todas, para agrupar por mes)
+  type RoutineRow = { id: string; team_id: string; training_date: string; routine: string };
+  let allRoutines: RoutineRow[] = [];
+  if (teamIds.length > 0) {
+    const { data } = await supabase
+      .from("daily_routines")
+      .select("id, team_id, training_date, routine")
+      .in("team_id", teamIds)
+      .order("training_date", { ascending: true })
+      .returns<RoutineRow[]>();
+    allRoutines = data ?? [];
+  }
+
+  // Agrupar por equipo → meses → generar signed URLs
+  const grouped = await Promise.all(teams.map(async (team) => {
+    const teamPlans    = plans.filter((p) => p.team_id === team.id);
+    const teamRoutines = allRoutines.filter((r) => r.team_id === team.id);
+
+    // Todos los mes-keys con contenido + el mes actual siempre
+    const keys = new Set<string>([curKey]);
+    teamPlans.forEach((p)    => keys.add(p.valid_from.slice(0, 7)));
+    teamRoutines.forEach((r) => keys.add(r.training_date.slice(0, 7)));
+
+    // Construir month data con signed URLs
+    const months: RunnerMonthData[] = await Promise.all(
+      Array.from(keys).map(async (key) => {
+        const plan    = teamPlans.find((p) => p.valid_from.startsWith(key)) ?? null;
+        const ruts    = teamRoutines
+          .filter((r) => r.training_date.startsWith(key))
+          .sort((a, b) => a.training_date.localeCompare(b.training_date));
+        const status  = key === curKey ? "current" : key > curKey ? "upcoming" : "past";
+
+        let signedUrl: string | null = null;
+        if (plan?.storage_path) {
+          const { data } = await supabase.storage
+            .from("training-plans")
+            .createSignedUrl(plan.storage_path, 3600);
+          signedUrl = data?.signedUrl ?? null;
+        }
+
+        return {
+          key,
+          label: monthLabel(key),
+          plan: plan ? { id: plan.id, file_name: plan.file_name, valid_from: plan.valid_from, valid_until: plan.valid_until, notes: plan.notes, signedUrl } : null,
+          routines: ruts,
+          status,
+          vigente: false,
+        };
+      })
+    );
+
+    // Determinar vigente
+    const cur = months.find((m) => m.status === "current");
+    if (cur && (cur.plan || cur.routines.length > 0)) {
+      cur.vigente = true;
+    } else {
+      const lastPast = months
+        .filter((m) => m.status === "past" && (m.plan || m.routines.length > 0))
+        .sort((a, b) => b.key.localeCompare(a.key))[0];
+      if (lastPast) lastPast.vigente = true;
+    }
+
+    // Ordenar: current → upcoming (asc) → past (desc)
+    months.sort((a, b) => {
+      const o = { current: 0, upcoming: 1, past: 2 };
+      if (a.status !== b.status) return o[a.status] - o[b.status];
+      if (a.status === "upcoming") return a.key.localeCompare(b.key);
+      return b.key.localeCompare(a.key);
+    });
+
+    return { team, months, coachNotes: team.coachNotes, coachSuspended: team.coachStatus === "suspended" };
+  }));
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", position: "relative", overflow: "hidden" }}>
-
-      {/* Fondo grilla */}
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
-        backgroundImage: `linear-gradient(rgba(163,230,53,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(163,230,53,0.03) 1px, transparent 1px)`,
-        backgroundSize: "48px 48px",
-      }} />
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "18rem", zIndex: 0, pointerEvents: "none", background: "linear-gradient(160deg, rgba(163,230,53,0.06) 0%, transparent 60%)" }} />
-
-      <div style={{ position: "relative", zIndex: 1, padding: "2.5rem 2rem", maxWidth: "56rem", margin: "0 auto" }}>
+    <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+      <div style={{ padding: "2.5rem 2rem", maxWidth: "56rem", margin: "0 auto" }}>
 
         {/* Header */}
         <div style={{ marginBottom: "2.5rem" }}>
@@ -84,7 +166,7 @@ export default async function RunnerPlansPage() {
             <span style={{ fontSize: "1.75rem" }}>📋</span>
             <h1 style={{ fontSize: "1.9rem", fontWeight: 900, color: "white", letterSpacing: "-0.02em" }}>Mis Planes</h1>
           </div>
-          <p style={{ color: "#555", fontSize: "0.9rem" }}>Planes de entrenamiento de tus equipos</p>
+          <p style={{ color: "#555", fontSize: "0.9rem" }}>Planes y rutinas de entrenamiento de tus equipos</p>
         </div>
 
         {/* Sin equipos */}
@@ -99,111 +181,63 @@ export default async function RunnerPlansPage() {
           </div>
         )}
 
-        {/* Grupos por equipo */}
+        {/* Por equipo */}
         <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
-          {grouped.map(({ team, active, history, coachNotes }) => (
+          {grouped.map(({ team, months, coachNotes, coachSuspended }) => (
             <div key={team.id}>
               {/* Cabecera equipo */}
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                <span style={{ display: "inline-block", width: "0.625rem", height: "0.625rem", borderRadius: "50%", background: "#a3e635", flexShrink: 0 }} />
-                <h2 style={{ color: "white", fontSize: "1.1rem", fontWeight: 800, margin: 0 }}>{team.name}</h2>
+                <span style={{
+                  display: "inline-block", width: "0.625rem", height: "0.625rem",
+                  borderRadius: "50%", flexShrink: 0,
+                  background: coachSuspended ? "#fb923c" : "#a3e635",
+                }} />
+                <h2 style={{ color: coachSuspended ? "#888" : "white", fontSize: "1.1rem", fontWeight: 800, margin: 0 }}>
+                  {team.name}
+                </h2>
+                {coachSuspended && (
+                  <span style={{
+                    background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.25)",
+                    borderRadius: "2rem", padding: "0.1rem 0.6rem",
+                    color: "#fb923c", fontSize: "0.68rem", fontWeight: 700,
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                  }}>
+                    Inactivo
+                  </span>
+                )}
               </div>
 
-              {/* Plan vigente */}
-              {active ? (
-                <div style={{ marginBottom: "0.75rem", border: "1px solid rgba(163,230,53,0.25)", borderRadius: "0.875rem", overflow: "hidden" }}>
-
-                  {/* Parte superior: info del plan + link */}
-                  <Link href={`/runner/plans/${active.id}`} style={{ textDecoration: "none", display: "block" }}>
-                    <div style={{ background: "rgba(163,230,53,0.06)", padding: "1.25rem 1.5rem", cursor: "pointer" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.6rem" }}>
-                            <span style={{ background: "#a3e635", color: "#000", fontSize: "0.65rem", fontWeight: 800, padding: "0.15rem 0.6rem", borderRadius: "2rem", textTransform: "uppercase" }}>
-                              ✓ Vigente
-                            </span>
-                          </div>
-                          <p style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            📄 {active.file_name}
-                          </p>
-                          <p style={{ color: "#a3e635", fontSize: "0.8rem", margin: "0.35rem 0 0 0" }}>
-                            {formatDate(active.valid_from)}{active.valid_until ? ` → ${formatDate(active.valid_until)}` : " → indefinido"}
-                          </p>
-                        </div>
-                        <div style={{ color: "#a3e635", fontSize: "0.85rem", fontWeight: 700, flexShrink: 0 }}>Ver →</div>
-                      </div>
-                    </div>
-                  </Link>
-
-                  {/* Indicaciones al grupo */}
-                  {active.notes && (
-                    <div style={{ background: "rgba(163,230,53,0.03)", borderTop: "1px solid rgba(163,230,53,0.12)", padding: "0.875rem 1.5rem" }}>
-                      <p style={{ color: "#6b9e2a", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 0.35rem 0" }}>
-                        👥 Indicaciones al grupo
-                      </p>
-                      <p style={{ color: "#aaa", fontSize: "0.84rem", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
-                        {active.notes}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Indicaciones personales */}
-                  {coachNotes && (
-                    <div style={{ background: "rgba(96,165,250,0.04)", borderTop: "1px solid rgba(96,165,250,0.15)", padding: "0.875rem 1.5rem" }}>
-                      <p style={{ color: "#60a5fa", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 0.35rem 0" }}>
-                        📝 Indicaciones personales
-                      </p>
-                      <p style={{ color: "#aaa", fontSize: "0.84rem", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
-                        {coachNotes}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div style={{ border: "1px solid #1e1e1e", borderRadius: "0.875rem", marginBottom: "0.75rem", overflow: "hidden" }}>
-                  <div style={{ background: "#111", padding: "1.5rem", textAlign: "center" }}>
-                    <p style={{ color: "#555", fontSize: "0.85rem", margin: 0 }}>Tu entrenador aún no subió un plan vigente para este equipo.</p>
+              {/* Warning coach suspendido */}
+              {coachSuspended && (
+                <div style={{
+                  background: "rgba(251,146,60,0.05)",
+                  border: "1px solid rgba(251,146,60,0.2)",
+                  borderRadius: "0.75rem",
+                  padding: "1rem 1.25rem",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "0.875rem",
+                  marginBottom: "1rem",
+                }}>
+                  <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: "0.05rem" }}>⚠️</span>
+                  <div>
+                    <p style={{ color: "#fb923c", fontWeight: 700, fontSize: "0.85rem", margin: "0 0 0.2rem 0" }}>
+                      Running team temporalmente inaccesible
+                    </p>
+                    <p style={{ color: "#6b5a48", fontSize: "0.8rem", margin: 0, lineHeight: 1.5 }}>
+                      Este equipo no está disponible en este momento. Consultá con tu entrenador para más información.
+                    </p>
                   </div>
-                  {coachNotes && (
-                    <div style={{ background: "rgba(96,165,250,0.04)", borderTop: "1px solid rgba(96,165,250,0.15)", padding: "0.875rem 1.5rem" }}>
-                      <p style={{ color: "#60a5fa", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", margin: "0 0 0.35rem 0" }}>
-                        📝 Indicaciones personales
-                      </p>
-                      <p style={{ color: "#aaa", fontSize: "0.84rem", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" }}>
-                        {coachNotes}
-                      </p>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Historial */}
-              {history.length > 0 && (
-                <div>
-                  <p style={{ color: "#444", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.5rem", paddingLeft: "0.25rem" }}>
-                    Historial
-                  </p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                    {history.map((plan) => (
-                      <Link key={plan.id} href={`/runner/plans/${plan.id}`} style={{ textDecoration: "none" }}>
-                        <div style={{
-                          background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "0.625rem",
-                          padding: "0.875rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem",
-                        }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ color: "#aaa", fontSize: "0.85rem", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {plan.file_name}
-                            </p>
-                            <p style={{ color: "#444", fontSize: "0.75rem", margin: "0.2rem 0 0 0" }}>
-                              {formatDate(plan.valid_from)}{plan.valid_until ? ` → ${formatDate(plan.valid_until)}` : ""}
-                            </p>
-                          </div>
-                          <span style={{ color: "#555", fontSize: "0.78rem", flexShrink: 0 }}>Ver →</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+              {/* Cards mensuales — solo si el coach está activo */}
+              {!coachSuspended && (
+                <RunnerPlanCard
+                  months={months}
+                  coachNotes={coachNotes}
+                  teamId={team.id}
+                />
               )}
             </div>
           ))}

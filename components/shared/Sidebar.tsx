@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { UserMenu } from "./UserMenu";
+import { RunnerAlertBell } from "@/components/runner/RunnerAlertBell";
+import { RunnerMessageBell } from "@/components/runner/RunnerMessageBell";
 
 interface SidebarProps {
   role: "coach" | "runner" | "superadmin";
@@ -8,10 +10,11 @@ interface SidebarProps {
 }
 
 const coachLinks = [
-  { href: "/coach/home",     label: "Inicio",        icon: "🏠" },
-  { href: "/coach/teams",    label: "Mis equipos",   icon: "👥" },
-  { href: "/coach/runners",  label: "Mis runners",   icon: "🏃" },
-  { href: "/coach/events",   label: "Eventos",       icon: "🏁" },
+  { href: "/coach/home",     label: "Inicio",          icon: "🏠" },
+  { href: "/coach/venues",   label: "Mis Sedes",       icon: "📍" },
+  { href: "/coach/teams",    label: "Mis Equipos",     icon: "👥" },
+  { href: "/coach/runners",  label: "Mis Runners",     icon: "🏃" },
+  { href: "/coach/events",   label: "Eventos",         icon: "🏁" },
   { href: "/coach/settings", label: "Perfil del team", icon: "⚙️" },
 ];
 
@@ -19,14 +22,15 @@ const runnerLinks = [
   { href: "/runner/home",    label: "Inicio",           icon: "🏠" },
   { href: "/runner/plans",   label: "Mis planes",       icon: "📋" },
   { href: "/runner/events",  label: "Eventos",          icon: "🏁" },
-  { href: "/runner/goals",   label: "Mis Objetivos",    icon: "🎯" },
+  { href: "/runner/goals",        label: "Mis Objetivos", icon: "🎯" },
+  { href: "/runner/achievements", label: "Mis Logros",    icon: "🏆" },
   { href: "/runner/payments", label: "Mis Pagos",        icon: "💳" },
-  { href: "/runner/join",    label: "Unirse a coach",   icon: "➕" },
+  { href: "/runner/join",    label: "Mis Running Teams",  icon: "🏃" },
   { href: "/runner/profile", label: "Mi Perfil",        icon: "👤" },
 ];
 
 const superadminLinks = [
-  { href: "/superadmin/coaches", label: "Entrenadores", icon: "🎯" },
+  { href: "/superadmin/coaches", label: "Entrenadores / Running Teams", icon: "🎯" },
 ];
 
 const roleConfig = {
@@ -118,6 +122,14 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
           </Link>
         ))}
       </nav>
+
+      {/* Comunicados y alertas del runner — invisibles si no hay nada */}
+      {role === "runner" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.25rem" }}>
+          <RunnerMessageBell />
+          <RunnerAlertBell />
+        </div>
+      )}
 
       <UserMenu fullName={fullName} email={email} />
     </aside>

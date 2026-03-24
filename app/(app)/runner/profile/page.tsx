@@ -62,6 +62,8 @@ export default function RunnerProfilePage() {
   const [uploadingCert, setUploadingCert] = useState(false);
   const [deletingCert, setDeletingCert] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [openPersonal, setOpenPersonal] = useState(false);
+  const [openCerts, setOpenCerts] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,10 +72,21 @@ export default function RunnerProfilePage() {
 
     const { data: prof } = await supabase
       .from("profiles")
-      .select("first_name,last_name,gender,birth_date,phone,address_street,address_number,address_floor,address_apt,address_postal,address_city")
+      .select("full_name,first_name,last_name,gender,birth_date,phone,address_street,address_number,address_floor,address_apt,address_postal,address_city")
       .eq("id", user.id)
       .single();
-    if (prof) setProfile(prof as Profile);
+    if (prof) {
+      const p = prof as typeof prof & { full_name?: string | null };
+      // Si first_name/last_name están vacíos, pre-llenar desde full_name del registro
+      let first = p.first_name ?? "";
+      let last  = p.last_name  ?? "";
+      if (!first && !last && p.full_name) {
+        const parts = p.full_name.trim().split(/\s+/);
+        first = parts[0] ?? "";
+        last  = parts.slice(1).join(" ");
+      }
+      setProfile({ ...p, first_name: first, last_name: last } as Profile);
+    }
 
     const { data: certData } = await supabase
       .from("medical_certificates")
@@ -156,170 +169,226 @@ export default function RunnerProfilePage() {
         <p style={{ color: "#666", fontSize: "0.875rem", marginTop: "0.35rem" }}>Tus datos personales y documentación médica.</p>
       </div>
 
-      {/* ── DATOS PERSONALES ── */}
-      <form onSubmit={handleSaveProfile} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", padding: "1.75rem", marginBottom: "1.5rem" }}>
-        <p style={sectionTitle}>Datos personales</p>
-
-        {/* Nombre y apellido */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-          <div>
-            <label style={labelStyle}>Nombre</label>
-            <input value={profile.first_name ?? ""} onChange={set("first_name")} placeholder="Juan" style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Apellido</label>
-            <input value={profile.last_name ?? ""} onChange={set("last_name")} placeholder="Pérez" style={inputStyle} />
-          </div>
-        </div>
-
-        {/* Sexo y fecha de nac */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-          <div>
-            <label style={labelStyle}>Sexo</label>
-            <select value={profile.gender ?? ""} onChange={set("gender")} style={{ ...inputStyle, cursor: "pointer" }}>
-              <option value="">— Seleccionar —</option>
-              <option value="masculino">Masculino</option>
-              <option value="femenino">Femenino</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Fecha de nacimiento</label>
-            <input type="date" value={profile.birth_date ?? ""} onChange={set("birth_date")} style={inputStyle} />
-          </div>
-        </div>
-
-        {/* Teléfono */}
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={labelStyle}>Teléfono celular</label>
-          <input value={profile.phone ?? ""} onChange={set("phone")} placeholder="+54 9 11 1234 5678" style={inputStyle} />
-        </div>
-
-        {/* Dirección */}
-        <p style={{ color: "#555", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: "1.25rem 0 0.75rem 0" }}>Dirección</p>
-
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-          <div>
-            <label style={labelStyle}>Calle</label>
-            <input value={profile.address_street ?? ""} onChange={set("address_street")} placeholder="Av. Corrientes" style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Número</label>
-            <input value={profile.address_number ?? ""} onChange={set("address_number")} placeholder="1234" style={inputStyle} />
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-          <div>
-            <label style={labelStyle}>Piso</label>
-            <input value={profile.address_floor ?? ""} onChange={set("address_floor")} placeholder="3" style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Departamento</label>
-            <input value={profile.address_apt ?? ""} onChange={set("address_apt")} placeholder="B" style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Código postal</label>
-            <input value={profile.address_postal ?? ""} onChange={set("address_postal")} placeholder="1043" style={inputStyle} />
-          </div>
-        </div>
-
-        <div style={{ marginBottom: "1.5rem" }}>
-          <label style={labelStyle}>Localidad</label>
-          <input value={profile.address_city ?? ""} onChange={set("address_city")} placeholder="Ciudad Autónoma de Buenos Aires" style={inputStyle} />
-        </div>
-
-        <button type="submit" disabled={saving} style={{ background: saving ? "#1a1a1a" : "#a3e635", color: saving ? "#444" : "#000", border: "none", borderRadius: "0.5rem", padding: "0.7rem 1.75rem", fontWeight: 700, fontSize: "0.875rem", cursor: saving ? "not-allowed" : "pointer" }}>
-          {saving ? "Guardando..." : "Guardar datos"}
-        </button>
-      </form>
-
-      {/* ── CERTIFICADOS MÉDICOS ── */}
-      <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", padding: "1.75rem" }}>
-        <p style={sectionTitle}>Certificados médicos</p>
-
-        {/* Lista de certificados */}
-        {certs.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "1.5rem 0", color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
-            No tenés certificados cargados todavía.
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", marginBottom: "1.5rem" }}>
-            {certs.map((cert) => {
-              const status = certStatus(cert.expires_at);
-              const colors = {
-                ok:      { bg: "rgba(163,230,53,0.05)", border: "rgba(163,230,53,0.2)", badge: "#a3e635", badgeBg: "rgba(163,230,53,0.1)", text: "Vigente" },
-                warning: { bg: "rgba(251,191,36,0.05)", border: "rgba(251,191,36,0.3)", badge: "#fbbf24", badgeBg: "rgba(251,191,36,0.1)", text: "Vence pronto" },
-                expired: { bg: "rgba(248,113,113,0.05)", border: "rgba(248,113,113,0.3)", badge: "#f87171", badgeBg: "rgba(248,113,113,0.1)", text: "Vencido" },
-              }[status];
-
-              return (
-                <div key={cert.id} style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: "0.625rem", padding: "0.875rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-                      <span style={{ background: colors.badgeBg, color: colors.badge, fontSize: "0.65rem", fontWeight: 800, padding: "0.1rem 0.5rem", borderRadius: "2rem", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
-                        {status === "expired" ? "⚠ " : status === "warning" ? "⏰ " : "✓ "}{colors.text}
-                      </span>
-                    </div>
-                    <p style={{ color: "white", fontWeight: 600, fontSize: "0.875rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      📄 {cert.file_name}
-                    </p>
-                    <p style={{ color: colors.badge, fontSize: "0.78rem", margin: "0.2rem 0 0 0", fontWeight: 600 }}>
-                      Vence: {formatDate(cert.expires_at)}
-                    </p>
-                  </div>
-                  <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
-                    {cert.signedUrl && (
-                      <a href={cert.signedUrl} target="_blank" rel="noopener noreferrer" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.35rem", color: "#aaa", padding: "0.3rem 0.65rem", fontSize: "0.75rem", textDecoration: "none", fontWeight: 600 }}>
-                        Ver
-                      </a>
-                    )}
-                    <button onClick={() => handleDeleteCert(cert.id)} disabled={deletingCert === cert.id} style={{ background: "transparent", border: "1px solid #2a1a1a", borderRadius: "0.35rem", color: "#c05050", padding: "0.3rem 0.65rem", cursor: "pointer", fontSize: "0.75rem" }}>
-                      {deletingCert === cert.id ? "..." : "Eliminar"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Formulario nuevo certificado */}
-        <form onSubmit={handleUploadCert} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "0.625rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <p style={{ color: "#aaa", fontSize: "0.82rem", fontWeight: 700, margin: 0 }}>Cargar nuevo certificado</p>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-            {/* Archivo */}
-            <div>
-              <label style={labelStyle}>Archivo (PDF o imagen) *</label>
-              <div style={{ border: `2px dashed ${certFile ? "rgba(163,230,53,0.4)" : "#222"}`, borderRadius: "0.5rem", padding: "0.875rem", textAlign: "center", background: certFile ? "rgba(163,230,53,0.04)" : "transparent", position: "relative", cursor: "pointer" }}>
-                <input id="cert-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*"
-                  onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
-                  style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-                {certFile ? (
-                  <p style={{ color: "#a3e635", fontSize: "0.8rem", fontWeight: 700, margin: 0 }}>📄 {certFile.name}</p>
-                ) : (
-                  <p style={{ color: "#444", fontSize: "0.8rem", margin: 0 }}>Click para seleccionar</p>
+      {/* ── ACORDEÓN: DATOS PERSONALES ── */}
+      {(() => {
+        const hasName = profile.first_name || profile.last_name;
+        const summary = hasName
+          ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
+          : "Sin datos cargados";
+        return (
+          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", marginBottom: "1rem", overflow: "hidden" }}>
+            {/* Header clickeable */}
+            <button
+              onClick={() => setOpenPersonal(o => !o)}
+              style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", padding: "1.1rem 1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <span style={{ fontSize: "1rem" }}>👤</span>
+                <span style={{ color: "white", fontWeight: 700, fontSize: "0.925rem" }}>Datos personales</span>
+                {!openPersonal && (
+                  <span style={{ color: "#555", fontSize: "0.75rem", fontWeight: 400 }}>{summary}</span>
                 )}
               </div>
-            </div>
+              <span style={{ color: "#444", fontSize: "0.8rem", transition: "transform 0.2s", display: "inline-block", transform: openPersonal ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+            </button>
 
-            {/* Vencimiento */}
-            <div>
-              <label style={labelStyle}>Fecha de vencimiento *</label>
-              <input type="date" value={certExpiry} onChange={(e) => setCertExpiry(e.target.value)} required style={inputStyle} />
-              <p style={{ color: "#444", fontSize: "0.72rem", marginTop: "0.35rem" }}>
-                Se alertará 30 días antes del vencimiento.
-              </p>
-            </div>
+            {/* Contenido */}
+            {openPersonal && (
+              <form onSubmit={handleSaveProfile} style={{ padding: "0 1.5rem 1.5rem 1.5rem", borderTop: "1px solid #1a1a1a" }}>
+                <div style={{ height: "1.25rem" }} />
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                  <div>
+                    <label style={labelStyle}>Nombre</label>
+                    <input value={profile.first_name ?? ""} onChange={set("first_name")} placeholder="Juan" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Apellido</label>
+                    <input value={profile.last_name ?? ""} onChange={set("last_name")} placeholder="Pérez" style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                  <div>
+                    <label style={labelStyle}>Sexo</label>
+                    <select value={profile.gender ?? ""} onChange={set("gender")} style={{ ...inputStyle, cursor: "pointer" }}>
+                      <option value="">— Seleccionar —</option>
+                      <option value="masculino">Masculino</option>
+                      <option value="femenino">Femenino</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Fecha de nacimiento</label>
+                    <input type="date" value={profile.birth_date ?? ""} onChange={set("birth_date")} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "1rem" }}>
+                  <label style={labelStyle}>Teléfono celular</label>
+                  <input value={profile.phone ?? ""} onChange={set("phone")} placeholder="+54 9 11 1234 5678" style={inputStyle} />
+                </div>
+
+                <p style={{ color: "#555", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: "1.25rem 0 0.75rem 0" }}>Dirección</p>
+
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                  <div>
+                    <label style={labelStyle}>Calle</label>
+                    <input value={profile.address_street ?? ""} onChange={set("address_street")} placeholder="Av. Corrientes" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Número</label>
+                    <input value={profile.address_number ?? ""} onChange={set("address_number")} placeholder="1234" style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                  <div>
+                    <label style={labelStyle}>Piso</label>
+                    <input value={profile.address_floor ?? ""} onChange={set("address_floor")} placeholder="3" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Departamento</label>
+                    <input value={profile.address_apt ?? ""} onChange={set("address_apt")} placeholder="B" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Código postal</label>
+                    <input value={profile.address_postal ?? ""} onChange={set("address_postal")} placeholder="1043" style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <label style={labelStyle}>Localidad</label>
+                  <input value={profile.address_city ?? ""} onChange={set("address_city")} placeholder="Ciudad Autónoma de Buenos Aires" style={inputStyle} />
+                </div>
+
+                <button type="submit" disabled={saving} style={{ background: saving ? "#1a1a1a" : "#a3e635", color: saving ? "#444" : "#000", border: "none", borderRadius: "0.5rem", padding: "0.7rem 1.75rem", fontWeight: 700, fontSize: "0.875rem", cursor: saving ? "not-allowed" : "pointer" }}>
+                  {saving ? "Guardando..." : "Guardar datos"}
+                </button>
+              </form>
+            )}
           </div>
+        );
+      })()}
 
-          <button type="submit" disabled={uploadingCert || !certFile || !certExpiry}
-            style={{ background: uploadingCert || !certFile || !certExpiry ? "#1a1a1a" : "#a3e635", color: uploadingCert || !certFile || !certExpiry ? "#444" : "#000", border: "none", borderRadius: "0.5rem", padding: "0.65rem", fontWeight: 700, fontSize: "0.875rem", cursor: uploadingCert || !certFile || !certExpiry ? "not-allowed" : "pointer" }}>
-            {uploadingCert ? "Subiendo..." : "Cargar certificado"}
-          </button>
-        </form>
-      </div>
+      {/* ── ACORDEÓN: CERTIFICADOS MÉDICOS ── */}
+      {(() => {
+        const latestCert = certs.length > 0 ? certs[certs.length - 1] : null;
+        const latestStatus = latestCert ? certStatus(latestCert.expires_at) : null;
+        const statusLabel: Record<string, { text: string; color: string }> = {
+          ok:      { text: "Vigente",      color: "#a3e635" },
+          warning: { text: "Vence pronto", color: "#fbbf24" },
+          expired: { text: "Vencido",      color: "#f87171" },
+        };
+        return (
+          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", overflow: "hidden" }}>
+            {/* Header clickeable */}
+            <button
+              onClick={() => setOpenCerts(o => !o)}
+              style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", padding: "1.1rem 1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <span style={{ fontSize: "1rem" }}>🏥</span>
+                <span style={{ color: "white", fontWeight: 700, fontSize: "0.925rem" }}>Certificados médicos</span>
+                {!openCerts && (
+                  certs.length === 0 ? (
+                    <span style={{ color: "#f87171", fontSize: "0.72rem", fontWeight: 600 }}>⚠ Sin certificado</span>
+                  ) : (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+                      <span style={{ color: "#555", fontSize: "0.75rem" }}>{certs.length} cargado{certs.length !== 1 ? "s" : ""}</span>
+                      {latestStatus && (
+                        <span style={{ color: statusLabel[latestStatus].color, fontSize: "0.72rem", fontWeight: 700 }}>
+                          · {statusLabel[latestStatus].text}
+                        </span>
+                      )}
+                    </span>
+                  )
+                )}
+              </div>
+              <span style={{ color: "#444", fontSize: "0.8rem", transition: "transform 0.2s", display: "inline-block", transform: openCerts ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+            </button>
+
+            {/* Contenido */}
+            {openCerts && (
+              <div style={{ padding: "0 1.5rem 1.5rem 1.5rem", borderTop: "1px solid #1a1a1a" }}>
+                <div style={{ height: "1.25rem" }} />
+
+                {certs.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "1.5rem 0", color: "#555", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+                    No tenés certificados cargados todavía.
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", marginBottom: "1.5rem" }}>
+                    {certs.map((cert) => {
+                      const status = certStatus(cert.expires_at);
+                      const colors = {
+                        ok:      { bg: "rgba(163,230,53,0.05)", border: "rgba(163,230,53,0.2)", badge: "#a3e635", badgeBg: "rgba(163,230,53,0.1)", text: "Vigente" },
+                        warning: { bg: "rgba(251,191,36,0.05)", border: "rgba(251,191,36,0.3)", badge: "#fbbf24", badgeBg: "rgba(251,191,36,0.1)", text: "Vence pronto" },
+                        expired: { bg: "rgba(248,113,113,0.05)", border: "rgba(248,113,113,0.3)", badge: "#f87171", badgeBg: "rgba(248,113,113,0.1)", text: "Vencido" },
+                      }[status];
+                      return (
+                        <div key={cert.id} style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: "0.625rem", padding: "0.875rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                              <span style={{ background: colors.badgeBg, color: colors.badge, fontSize: "0.65rem", fontWeight: 800, padding: "0.1rem 0.5rem", borderRadius: "2rem", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+                                {status === "expired" ? "⚠ " : status === "warning" ? "⏰ " : "✓ "}{colors.text}
+                              </span>
+                            </div>
+                            <p style={{ color: "white", fontWeight: 600, fontSize: "0.875rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              📄 {cert.file_name}
+                            </p>
+                            <p style={{ color: colors.badge, fontSize: "0.78rem", margin: "0.2rem 0 0 0", fontWeight: 600 }}>
+                              Vence: {formatDate(cert.expires_at)}
+                            </p>
+                          </div>
+                          <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+                            {cert.signedUrl && (
+                              <a href={cert.signedUrl} target="_blank" rel="noopener noreferrer" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.35rem", color: "#aaa", padding: "0.3rem 0.65rem", fontSize: "0.75rem", textDecoration: "none", fontWeight: 600 }}>
+                                Ver
+                              </a>
+                            )}
+                            <button onClick={() => handleDeleteCert(cert.id)} disabled={deletingCert === cert.id} style={{ background: "transparent", border: "1px solid #2a1a1a", borderRadius: "0.35rem", color: "#c05050", padding: "0.3rem 0.65rem", cursor: "pointer", fontSize: "0.75rem" }}>
+                              {deletingCert === cert.id ? "..." : "Eliminar"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <form onSubmit={handleUploadCert} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "0.625rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <p style={{ color: "#aaa", fontSize: "0.82rem", fontWeight: 700, margin: 0 }}>Cargar nuevo certificado</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                    <div>
+                      <label style={labelStyle}>Archivo (PDF o imagen) *</label>
+                      <div style={{ border: `2px dashed ${certFile ? "rgba(163,230,53,0.4)" : "#222"}`, borderRadius: "0.5rem", padding: "0.875rem", textAlign: "center", background: certFile ? "rgba(163,230,53,0.04)" : "transparent", position: "relative", cursor: "pointer" }}>
+                        <input id="cert-file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*"
+                          onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
+                          style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
+                        {certFile ? (
+                          <p style={{ color: "#a3e635", fontSize: "0.8rem", fontWeight: 700, margin: 0 }}>📄 {certFile.name}</p>
+                        ) : (
+                          <p style={{ color: "#444", fontSize: "0.8rem", margin: 0 }}>Click para seleccionar</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Fecha de vencimiento *</label>
+                      <input type="date" value={certExpiry} onChange={(e) => setCertExpiry(e.target.value)} required style={inputStyle} />
+                      <p style={{ color: "#444", fontSize: "0.72rem", marginTop: "0.35rem" }}>Se alertará 30 días antes del vencimiento.</p>
+                    </div>
+                  </div>
+                  <button type="submit" disabled={uploadingCert || !certFile || !certExpiry}
+                    style={{ background: uploadingCert || !certFile || !certExpiry ? "#1a1a1a" : "#a3e635", color: uploadingCert || !certFile || !certExpiry ? "#444" : "#000", border: "none", borderRadius: "0.5rem", padding: "0.65rem", fontWeight: 700, fontSize: "0.875rem", cursor: uploadingCert || !certFile || !certExpiry ? "not-allowed" : "pointer" }}>
+                    {uploadingCert ? "Subiendo..." : "Cargar certificado"}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </main>
   );
 }

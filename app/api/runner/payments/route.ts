@@ -27,7 +27,7 @@ export async function GET() {
   // Planes de pago
   const { data: plans } = await supabase
     .from("runner_payment_plans")
-    .select("coach_id, plan_type, amount, notes")
+    .select("coach_id, plan_type, amount, notes, discount_pct")
     .eq("runner_id", user.id)
     .in("coach_id", coachIds);
 
@@ -42,7 +42,7 @@ export async function GET() {
   const result = coachIds.map((coachId) => {
     const profile = coachProfiles?.find((p) => p.id === coachId);
     const row = coachRows?.find((r) => r.coach_id === coachId);
-    const plan = plans?.find((p) => p.coach_id === coachId) ?? { plan_type: "monthly", amount: null, notes: null };
+    const plan = plans?.find((p) => p.coach_id === coachId) ?? { plan_type: "monthly", amount: null, notes: null, discount_pct: 0 };
     const coachReceipts = receipts?.filter((r) => r.coach_id === coachId) ?? [];
     return {
       coach: {

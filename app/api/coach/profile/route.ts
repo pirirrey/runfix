@@ -4,10 +4,11 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 
 const schema = z.object({
-  team_name:        z.string().nullable().optional(),
-  team_description: z.string().nullable().optional(),
-  team_location:    z.string().nullable().optional(),
-  team_logo_path:   z.string().nullable().optional(),
+  team_name:         z.string().nullable().optional(),
+  team_description:  z.string().nullable().optional(),
+  team_location:     z.string().nullable().optional(),
+  team_logo_path:    z.string().nullable().optional(),
+  subscription_plan: z.enum(["starter", "pro", "elite"]).optional(),
 });
 
 export async function PATCH(req: NextRequest) {

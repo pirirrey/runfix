@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { PLAN_LIMITS, type PlanId } from "@/lib/plans";
 
 const schema = z.object({
   invite_code: z.string().min(1).max(20),
@@ -50,10 +51,45 @@ export async function POST(req: NextRequest) {
 
   const coach = coaches[0];
 
-  // Insertar en coach_runners
+  // Verificar límite de runners según plan del coach
+  const { data: coachProfile } = await supabase
+    .from("profiles")
+    .select("subscription_plan")
+    .eq("id", coach.id)
+    .single<{ subscription_plan: string }>();
+
+  const plan = (coachProfile?.subscription_plan ?? "starter") as PlanId;
+  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.starter;
+
+  if (limits.maxRunners !== null) {
+    const { count } = await supabase
+      .from("coach_runners")
+      .select("id", { count: "exact", head: true })
+      .eq("coach_id", coach.id);
+
+    if ((count ?? 0) >= limits.maxRunners) {
+      return NextResponse.json({
+        error: "Este equipo alcanzó el límite de runners de su plan actual. Pedile a tu entrenador que actualice su suscripción.",
+      }, { status: 403 });
+    }
+  }
+
+  // Buscar sede por defecto del coach para auto-asignar
+  const { data: defaultVenue } = await supabase
+    .from("coach_venues")
+    .select("id")
+    .eq("coach_id", coach.id)
+    .eq("is_default", true)
+    .single();
+
+  // Insertar en coach_runners (con sede por defecto si existe)
   const { error: insertError } = await supabase
     .from("coach_runners")
-    .insert({ coach_id: coach.id, runner_id: user.id });
+    .insert({
+      coach_id:  coach.id,
+      runner_id: user.id,
+      venue_id:  defaultVenue?.id ?? null,
+    });
 
   if (insertError) {
     if (insertError.code === "23505") {

@@ -4,12 +4,15 @@ import { useEffect, useState, useCallback } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
 import { ConfirmModal, ConfirmVariant } from "@/components/shared/ConfirmModal";
+import { PLAN_LIMITS, PLANS, type PlanId } from "@/lib/plans";
 
 type Runner = { id: string; full_name: string | null; email: string };
 type Team = { id: string; name: string };
 type Membership = { id: string; team_id: string; runner_id: string; coach_notes: string | null };
 type CertStatus = "ok" | "warning" | "expired" | "missing";
 type PaymentStatus = "ok" | "pending" | "exempt" | "annual";
+
+type RunnerVenue = { id: string; name: string };
 
 type RunnerWithTeams = {
   id: string;
@@ -18,6 +21,7 @@ type RunnerWithTeams = {
   assignedTeams: string[];
   assigning: boolean;
   suspended: boolean;
+  venues: RunnerVenue[];
 };
 
 function getCertStatus(certs: { expires_at: string }[]): CertStatus {
@@ -49,6 +53,7 @@ export default function CoachRunnersPage() {
 
   const [runners, setRunners] = useState<RunnerWithTeams[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [venues, setVenues] = useState<{ id: string; name: string }[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [notes, setNotes] = useState<Record<string, NoteState>>({});
   const [certStatuses, setCertStatuses] = useState<Record<string, CertStatus>>({});
@@ -61,7 +66,9 @@ export default function CoachRunnersPage() {
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [showInviteText, setShowInviteText] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<PlanId>("starter");
   const [search, setSearch] = useState("");
+  const [quickFilter, setQuickFilter] = useState<string>("all"); // "all" | "no_cert" | "no_payment" | "no_venue" | venueId
   const [expanded, setExpanded] = useState<string | null>(null); // runner id expandido
 
   type ModalConfig = { title: string; body: string; confirmLabel: string; variant: ConfirmVariant; onConfirm: () => void };
@@ -73,13 +80,18 @@ export default function CoachRunnersPage() {
     if (!user) return;
 
     const { data: profile } = await supabase
-      .from("profiles").select("invite_code, team_name, full_name").eq("id", user.id).single();
+      .from("profiles").select("invite_code, team_name, full_name, subscription_plan").eq("id", user.id).single();
     if (profile?.invite_code) setInviteCode(profile.invite_code);
     if (profile?.team_name || profile?.full_name) setTeamName(profile.team_name || profile.full_name || "");
+    if (profile?.subscription_plan) setSubscriptionPlan((profile.subscription_plan as PlanId) ?? "starter");
 
     const { data: teamsData } = await supabase
       .from("teams").select("id, name").eq("coach_id", user.id).order("name");
     setTeams(teamsData ?? []);
+
+    const { data: venuesData } = await supabase
+      .from("coach_venues").select("id, name").eq("coach_id", user.id).order("sort_order").order("created_at");
+    setVenues(venuesData ?? []);
 
     const { data: coachRunners } = await supabase
       .from("coach_runners")
@@ -90,6 +102,22 @@ export default function CoachRunnersPage() {
     if (!coachRunners) { setLoading(false); return; }
 
     const runnerIds = coachRunners.map((cr) => cr.runner.id);
+
+    // Sedes asignadas a cada runner (multi-sede)
+    const { data: runnerVenuesRaw } = await supabase
+      .from("runner_venues")
+      .select("runner_id, venue_id, venue:coach_venues(id, name)")
+      .eq("coach_id", user.id) as { data: { runner_id: string; venue_id: string; venue: { id: string; name: string } }[] | null };
+
+    // Mapa runner_id → sedes[]
+    const venuesByRunner = new Map<string, RunnerVenue[]>();
+    for (const rv of runnerVenuesRaw ?? []) {
+      if (!rv.venue) continue;
+      const list = venuesByRunner.get(rv.runner_id) ?? [];
+      list.push({ id: rv.venue.id, name: rv.venue.name });
+      venuesByRunner.set(rv.runner_id, list);
+    }
+
     let mem: Membership[] = [];
     if (runnerIds.length > 0) {
       const { data } = await supabase
@@ -111,6 +139,7 @@ export default function CoachRunnersPage() {
       assignedTeams: mem.filter((m) => m.runner_id === cr.runner.id).map((m) => m.team_id),
       assigning: false,
       suspended: cr.suspended ?? false,
+      venues: venuesByRunner.get(cr.runner.id) ?? [],
     }));
     setRunners(withTeams);
 
@@ -290,21 +319,115 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
 
   const filtered = runners.filter((cr) => {
     const q = search.toLowerCase();
-    return (
+    const matchesSearch =
       (cr.runner.full_name ?? "").toLowerCase().includes(q) ||
-      cr.runner.email.toLowerCase().includes(q)
-    );
+      cr.runner.email.toLowerCase().includes(q);
+    if (!matchesSearch) return false;
+
+    if (quickFilter === "no_cert") {
+      const cs = certStatuses[cr.runner.id];
+      return cs === "missing" || cs === "expired";
+    }
+    if (quickFilter === "no_payment") return paymentStatuses[cr.runner.id] === "pending";
+    if (quickFilter === "no_venue")   return cr.venues.length === 0;
+    if (quickFilter !== "all")        return cr.venues.some(v => v.id === quickFilter);
+    return true;
   });
+
+  const noCertCount  = runners.filter((cr) => { const cs = certStatuses[cr.runner.id]; return cs === "missing" || cs === "expired"; }).length;
+  const noPayCount   = runners.filter((cr) => paymentStatuses[cr.runner.id] === "pending").length;
+  const noVenueCount = runners.filter((cr) => cr.venues.length === 0).length;
+
+  // Sedes del coach con conteo de runners asignados
+  const venueFilters = venues.map(v => ({
+    id:    v.id,
+    name:  v.name,
+    count: runners.filter(cr => cr.venues.some(rv => rv.id === v.id)).length,
+  }));
 
   return (
     <>
     <main style={{ padding: "2rem", maxWidth: "64rem", margin: "0 auto" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "white", marginBottom: "0.25rem" }}>🏃 Mis Runners</h1>
-        <p style={{ color: "#888", fontSize: "0.9rem" }}>Runners asociados a vos. Asignales equipos e indicaciones.</p>
-      </div>
+      {(() => {
+        const limits   = PLAN_LIMITS[subscriptionPlan] ?? PLAN_LIMITS.starter;
+        const planMeta = PLANS.find(p => p.id === subscriptionPlan) ?? PLANS[0];
+        const activeRunners = runners.filter(r => !r.suspended).length;
+        const atLimit  = limits.maxRunners !== null && activeRunners >= limits.maxRunners;
+        const nearLimit = limits.maxRunners !== null && !atLimit && activeRunners >= limits.maxRunners - 2;
+
+        return (
+          <>
+            <div style={{
+              display: "flex", alignItems: "flex-start",
+              justifyContent: "space-between", marginBottom: "2rem",
+              gap: "1rem",
+            }}>
+              <div>
+                <p style={{ color: "#a3e635", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>
+                  Panel de entrenador
+                </p>
+                <h1 style={{ color: "white", fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0 }}>
+                  Mis Runners
+                </h1>
+                <p style={{ color: "#666", fontSize: "0.9rem", marginTop: "0.35rem" }}>
+                  Runners asociados a vos. Asignales equipos e indicaciones.
+                </p>
+              </div>
+
+              {/* Contador de uso */}
+              {limits.maxRunners !== null && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", flexShrink: 0, paddingTop: "0.25rem" }}>
+                  <span style={{
+                    color: atLimit ? "#f59e0b" : nearLimit ? "#f59e0b" : "#555",
+                    fontSize: "0.85rem", fontWeight: 600,
+                  }}>
+                    {activeRunners} / {limits.maxRunners} runners
+                  </span>
+                  {(atLimit || nearLimit) && (
+                    <Link href="/coach/settings" style={{
+                      background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)",
+                      borderRadius: "2rem", padding: "0.1rem 0.55rem",
+                      color: "#f59e0b", fontSize: "0.65rem", fontWeight: 700,
+                      textDecoration: "none", whiteSpace: "nowrap",
+                    }}>
+                      Mejorar plan →
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Banner límite / cerca del límite */}
+            {(atLimit || nearLimit) && (
+              <div style={{
+                background: "rgba(245,158,11,0.04)",
+                border: "1px solid rgba(245,158,11,0.15)",
+                borderRadius: "0.75rem",
+                padding: "0.875rem 1.25rem",
+                display: "flex", alignItems: "flex-start", gap: "0.75rem",
+                marginBottom: "1.5rem",
+              }}>
+                <span style={{ fontSize: "1rem", flexShrink: 0 }}>{atLimit ? "💡" : "⚠️"}</span>
+                <div>
+                  <p style={{ color: "#f59e0b", fontWeight: 700, fontSize: "0.82rem", margin: "0 0 0.15rem 0" }}>
+                    {atLimit
+                      ? "Límite de runners alcanzado"
+                      : `Casi en el límite de tu plan (${activeRunners}/${limits.maxRunners})`}
+                  </p>
+                  <p style={{ color: "#7a6a3a", fontSize: "0.77rem", margin: 0, lineHeight: 1.5 }}>
+                    {atLimit
+                      ? <>Tu plan <strong style={{ color: "#aaa" }}>{planMeta.name}</strong> permite hasta {limits.maxRunners} runners. Para agregar más, <Link href="/coach/settings" style={{ color: "#f59e0b", textDecoration: "underline" }}>cambiá tu plan</Link>.</>
+                      : <>Te quedan {limits.maxRunners - activeRunners} lugar{limits.maxRunners - activeRunners !== 1 ? "es" : ""} en tu plan <strong style={{ color: "#aaa" }}>{planMeta.name}</strong>. <Link href="/coach/settings" style={{ color: "#f59e0b", textDecoration: "underline" }}>Ver planes</Link>.</>
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Código de invitación */}
       <div style={{ background: "#111", border: "1px solid #222", borderRadius: "0.75rem", padding: "1.25rem 1.5rem", marginBottom: "2rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
@@ -358,18 +481,99 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
         </div>
       )}
 
-      {/* Buscador */}
+      {/* Buscador + filtros rápidos */}
       {runners.length > 0 && (
-        <div style={{ marginBottom: "1rem", position: "relative" }}>
-          <span style={{ position: "absolute", left: "0.875rem", top: "50%", transform: "translateY(-50%)", fontSize: "0.9rem", pointerEvents: "none" }}>🔍</span>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre o email…"
-            style={{ width: "100%", background: "#111", border: "1px solid #222", borderRadius: "0.5rem", padding: "0.65rem 0.875rem 0.65rem 2.25rem", color: "white", fontSize: "0.875rem", outline: "none", boxSizing: "border-box" }}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "1rem" }}>✕</button>
+        <div style={{ marginBottom: "1rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+          {/* Input de búsqueda */}
+          <div style={{ position: "relative" }}>
+            <span style={{ position: "absolute", left: "0.875rem", top: "50%", transform: "translateY(-50%)", fontSize: "0.9rem", pointerEvents: "none" }}>🔍</span>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre o email…"
+              style={{ width: "100%", background: "#111", border: "1px solid #222", borderRadius: "0.5rem", padding: "0.65rem 0.875rem 0.65rem 2.25rem", color: "white", fontSize: "0.875rem", outline: "none", boxSizing: "border-box" }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "1rem" }}>✕</button>
+            )}
+          </div>
+
+          {/* Filtros rápidos — fila 1: estados */}
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            {(
+              [
+                { key: "all",        label: "Todos",              icon: "👥", count: runners.length, activeColor: "#a3e635", activeBg: "rgba(163,230,53,0.12)", activeBorder: "rgba(163,230,53,0.35)" },
+                { key: "no_cert",    label: "Sin apto médico",    icon: "⚠",  count: noCertCount,    activeColor: "#f87171", activeBg: "rgba(248,113,113,0.1)",  activeBorder: "rgba(248,113,113,0.35)" },
+                { key: "no_payment", label: "Sin pago del mes",   icon: "💳", count: noPayCount,     activeColor: "#fbbf24", activeBg: "rgba(251,191,36,0.1)",   activeBorder: "rgba(251,191,36,0.35)" },
+                { key: "no_venue",   label: "Sin sede",           icon: "📍", count: noVenueCount,   activeColor: "#a78bfa", activeBg: "rgba(167,139,250,0.1)",  activeBorder: "rgba(167,139,250,0.35)" },
+              ]
+            ).map(({ key, label, icon, count, activeColor, activeBg, activeBorder }) => {
+              const active = quickFilter === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setQuickFilter(key)}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                    background: active ? activeBg : "#111",
+                    border: `1px solid ${active ? activeBorder : "#222"}`,
+                    borderRadius: "2rem", padding: "0.35rem 0.85rem",
+                    color: active ? activeColor : "#666",
+                    fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                    cursor: "pointer", transition: "all 0.15s",
+                  }}
+                >
+                  <span>{icon}</span>
+                  <span>{label}</span>
+                  <span style={{
+                    background: active ? (activeColor + "22") : "#1a1a1a",
+                    color: active ? activeColor : "#444",
+                    borderRadius: "2rem", padding: "0 0.45rem",
+                    fontSize: "0.7rem", fontWeight: 700, minWidth: "1.4rem", textAlign: "center",
+                  }}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Filtros por sede — fila 2 (si hay sedes configuradas) */}
+          {venueFilters.length > 0 && (
+            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginRight: "0.2rem" }}>
+                Sede:
+              </span>
+              {venueFilters.map(({ id, name, count }) => {
+                const active = quickFilter === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setQuickFilter(active ? "all" : id)}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.35rem",
+                      background: active ? "rgba(163,230,53,0.1)" : "#111",
+                      border: `1px solid ${active ? "rgba(163,230,53,0.35)" : "#222"}`,
+                      borderRadius: "2rem", padding: "0.3rem 0.75rem",
+                      color: active ? "#a3e635" : "#555",
+                      fontSize: "0.75rem", fontWeight: active ? 700 : 500,
+                      cursor: "pointer", transition: "all 0.15s",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.7rem" }}>📍</span>
+                    <span>{name}</span>
+                    <span style={{
+                      background: active ? "rgba(163,230,53,0.2)" : "#1a1a1a",
+                      color: active ? "#a3e635" : "#444",
+                      borderRadius: "2rem", padding: "0 0.4rem",
+                      fontSize: "0.68rem", fontWeight: 700, minWidth: "1.3rem", textAlign: "center",
+                    }}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
@@ -390,18 +594,14 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
       ) : (
         <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.75rem", overflow: "hidden" }}>
           {/* Encabezado tabla */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 130px 180px", gap: "0", borderBottom: "1px solid #1e1e1e", padding: "0.65rem 1.5rem", background: "#0d0d0d" }}>
-            {["Runner", "Equipos", "Indicaciones", "Acciones"].map((h) => (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px", gap: "0", borderBottom: "1px solid #1e1e1e", padding: "0.5rem 1.25rem", background: "#0d0d0d" }}>
+            {["Runner", "Equipos", "Acciones"].map((h) => (
               <span key={h} style={{ color: "#3a3a3a", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>{h}</span>
             ))}
           </div>
 
           {/* Filas */}
           {filtered.map((cr, idx) => {
-            const isExpanded = expanded === cr.runner.id;
-            const runnerMems = memberships.filter((m) => m.runner_id === cr.runner.id && cr.assignedTeams.includes(m.team_id));
-            const hasAnyNote = runnerMems.some((m) => (m.coach_notes ?? "").trim().length > 0);
-            const noteCount = runnerMems.filter((m) => (m.coach_notes ?? "").trim().length > 0).length;
             const certStatus = certStatuses[cr.runner.id];
             const payStatus = paymentStatuses[cr.runner.id];
 
@@ -409,21 +609,28 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
               <div key={cr.id} style={{ borderBottom: idx < filtered.length - 1 ? "1px solid #161616" : "none" }}>
                 {/* Fila principal */}
                 <div style={{
-                  display: "grid", gridTemplateColumns: "1fr 1fr 130px 180px",
-                  gap: "0", padding: "0.875rem 1.5rem", alignItems: "center",
-                  background: cr.suspended ? "rgba(180,30,30,0.03)" : isExpanded ? "#141414" : "transparent",
+                  display: "grid", gridTemplateColumns: "1fr 1fr 160px",
+                  gap: "0", padding: "0.55rem 1.25rem", alignItems: "center",
+                  background: cr.suspended ? "rgba(180,30,30,0.03)" : "transparent",
                   transition: "background 0.15s",
                 }}>
 
                   {/* Nombre + email + badges */}
                   <div style={{ minWidth: 0, opacity: cr.suspended ? 0.55 : 1 }}>
-                    {/* Nombre como link principal */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+
+                    {/* Fila 1: nombre + "Ver perfil" + suspendido */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.2rem" }}>
                       <Link
                         href={`/coach/runners/${cr.runner.id}`}
-                        style={{ color: "white", fontWeight: 700, fontSize: "0.9rem", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "160px" }}
+                        style={{ color: "white", fontWeight: 700, fontSize: "0.875rem", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "150px" }}
                       >
                         {cr.runner.full_name || "Sin nombre"}
+                      </Link>
+                      <Link
+                        href={`/coach/runners/${cr.runner.id}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.3rem", color: "#a3e635", fontSize: "0.65rem", fontWeight: 700, padding: "0.15rem 0.5rem", textDecoration: "none", flexShrink: 0 }}
+                      >
+                        Ver perfil →
                       </Link>
                       {cr.suspended && (
                         <span style={{ flexShrink: 0, background: "rgba(180,30,30,0.18)", border: "1px solid rgba(180,30,30,0.35)", color: "#c05050", fontSize: "0.57rem", fontWeight: 800, padding: "0.1rem 0.4rem", borderRadius: "2rem", letterSpacing: "0.06em", textTransform: "uppercase" }}>
@@ -432,25 +639,42 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
                       )}
                     </div>
 
-                    {/* Email */}
-                    <p style={{ color: "#444", fontSize: "0.72rem", margin: "0.15rem 0 0.3rem 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {/* Fila 2: email */}
+                    <p style={{ color: "#444", fontSize: "0.7rem", margin: "0 0 0.2rem 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {cr.runner.email}
                     </p>
 
-                    {/* Alertas compactas */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem" }}>
-                      {certStatus && certStatus !== "ok" && (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", color: certBadge[certStatus].color, fontSize: "0.65rem", fontWeight: 600 }}>
-                          <span style={{ fontSize: "0.55rem" }}>{certBadge[certStatus].icon}</span>
-                          {certBadge[certStatus].label}
+                    {/* Fila 3: sedes */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" }}>
+                      {cr.venues.length > 0 ? cr.venues.map(v => (
+                        <span
+                          key={v.id}
+                          onClick={() => setQuickFilter(v.id === quickFilter ? "all" : v.id)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", background: v.id === quickFilter ? "rgba(163,230,53,0.15)" : "rgba(163,230,53,0.07)", border: `1px solid ${v.id === quickFilter ? "rgba(163,230,53,0.4)" : "rgba(163,230,53,0.2)"}`, borderRadius: "2rem", padding: "0.1rem 0.5rem", color: "#7aad1f", fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}
+                          title={`Filtrar por ${v.name}`}
+                        >
+                          📍 {v.name}
                         </span>
-                      )}
-                      {payStatus === "pending" && (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", color: "#fbbf24", fontSize: "0.65rem", fontWeight: 600 }}>
-                          <span>💳</span> Sin pago del mes
-                        </span>
+                      )) : (
+                        <span style={{ color: "#2a2a2a", fontSize: "0.62rem" }}>📍 Sin sede</span>
                       )}
                     </div>
+
+                    {/* Fila 4: alertas — siempre debajo de las sedes */}
+                    {(certStatus && certStatus !== "ok" || payStatus === "pending") && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                        {certStatus && certStatus !== "ok" && (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", color: certBadge[certStatus].color, fontSize: "0.62rem", fontWeight: 600 }}>
+                            {certBadge[certStatus].icon} {certBadge[certStatus].label}
+                          </span>
+                        )}
+                        {payStatus === "pending" && (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem", color: "#fbbf24", fontSize: "0.62rem", fontWeight: 600 }}>
+                            💳 Sin pago del mes
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Equipos (chips toggleables) */}
@@ -466,30 +690,6 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
                         </button>
                       );
                     })}
-                  </div>
-
-                  {/* Indicaciones personales */}
-                  <div>
-                    {cr.assignedTeams.length > 0 ? (
-                      <button
-                        onClick={() => setExpanded(isExpanded ? null : cr.runner.id)}
-                        style={{
-                          display: "flex", alignItems: "center", gap: "0.35rem",
-                          background: isExpanded ? "rgba(163,230,53,0.1)" : hasAnyNote ? "rgba(163,230,53,0.06)" : "#181818",
-                          border: isExpanded ? "1px solid rgba(163,230,53,0.4)" : hasAnyNote ? "1px solid rgba(163,230,53,0.22)" : "1px solid #252525",
-                          borderRadius: "0.4rem",
-                          color: isExpanded ? "#a3e635" : hasAnyNote ? "#a3e635" : "#444",
-                          padding: "0.3rem 0.7rem", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
-                        }}
-                      >
-                        <span>📝</span>
-                        <span>
-                          {isExpanded ? "Cerrar" : hasAnyNote ? `Ver (${noteCount})` : "Agregar"}
-                        </span>
-                      </button>
-                    ) : (
-                      <span style={{ color: "#2a2a2a", fontSize: "0.75rem" }}>Sin equipos</span>
-                    )}
                   </div>
 
                   {/* Acciones */}
@@ -520,66 +720,6 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
                   </div>
                 </div>
 
-                {/* Panel expandido de indicaciones */}
-                {isExpanded && (
-                  <div style={{ background: "#0d0d0d", borderTop: "1px solid #1a1a1a", padding: "1rem 1.25rem" }}>
-                    <p style={{ color: "#555", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.75rem" }}>
-                      Indicaciones por equipo
-                    </p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
-                      {cr.assignedTeams.map((teamId) => {
-                        const team = teams.find((t) => t.id === teamId);
-                        const mem = getMembershipForTeam(cr.runner.id, teamId);
-                        if (!team || !mem) return null;
-                        const noteState = notes[mem.id];
-                        const hasNote = (mem.coach_notes ?? "").trim().length > 0;
-
-                        return (
-                          <div key={teamId} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.5rem", padding: "0.75rem 1rem" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", marginBottom: hasNote && !noteState?.open ? "0.5rem" : "0" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                <span style={{ color: "#666", fontSize: "0.8rem" }}>👥</span>
-                                <span style={{ color: "#aaa", fontSize: "0.82rem", fontWeight: 600 }}>{team.name}</span>
-                                {hasNote && !noteState?.open && (
-                                  <span style={{ background: "rgba(163,230,53,0.1)", color: "#a3e635", fontSize: "0.62rem", fontWeight: 700, padding: "0.1rem 0.4rem", borderRadius: "2rem" }}>Con indicaciones</span>
-                                )}
-                              </div>
-                              <button onClick={() => toggleNote(mem.id)}
-                                style={{ background: noteState?.open ? "rgba(163,230,53,0.1)" : "transparent", border: noteState?.open ? "1px solid rgba(163,230,53,0.3)" : "1px solid #2a2a2a", borderRadius: "0.35rem", color: noteState?.open ? "#a3e635" : "#666", padding: "0.2rem 0.6rem", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>
-                                {noteState?.open ? "Cancelar" : "✏️ Editar indicaciones"}
-                              </button>
-                            </div>
-
-                            {hasNote && !noteState?.open && (
-                              <p style={{ color: "#777", fontSize: "0.82rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{mem.coach_notes}</p>
-                            )}
-
-                            {noteState?.open && (
-                              <div style={{ marginTop: "0.625rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                                <textarea
-                                  value={noteState.text}
-                                  onChange={(e) => setNotes((prev) => ({ ...prev, [mem.id]: { ...prev[mem.id], text: e.target.value } }))}
-                                  placeholder={`Indicaciones para ${cr.runner.full_name ?? "este runner"} en ${team.name}…`}
-                                  rows={3}
-                                  style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "white", fontSize: "0.85rem", padding: "0.6rem 0.75rem", resize: "vertical", outline: "none", width: "100%", boxSizing: "border-box", lineHeight: 1.5 }}
-                                />
-                                <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                                  <button onClick={() => toggleNote(mem.id)} style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#666", padding: "0.3rem 0.75rem", cursor: "pointer", fontSize: "0.78rem" }}>
-                                    Cancelar
-                                  </button>
-                                  <button onClick={() => saveNote(mem.id, teamId)} disabled={noteState.saving}
-                                    style={{ background: "#a3e635", border: "none", borderRadius: "0.4rem", color: "#000", padding: "0.3rem 0.75rem", cursor: noteState.saving ? "not-allowed" : "pointer", fontSize: "0.78rem", fontWeight: 700, opacity: noteState.saving ? 0.7 : 1 }}>
-                                    {noteState.saving ? "Guardando…" : "Guardar"}
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })}

@@ -31,7 +31,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function CreateTeamDialog() {
+interface Props {
+  atLimit?: boolean;
+  maxTeams?: number;
+  planName?: string;
+}
+
+export function CreateTeamDialog({ atLimit = false, maxTeams, planName }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -65,11 +71,26 @@ export function CreateTeamDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={atLimit ? undefined : setOpen}>
       <DialogTrigger asChild>
-        <Button style={{ background: "#a3e635", color: "#000", fontWeight: 700 }}>
-          + Nuevo equipo
-        </Button>
+        <button
+          disabled={atLimit}
+          title={atLimit ? `Límite del plan ${planName ?? ""} alcanzado` : "Crear nuevo equipo"}
+          onClick={() => !atLimit && setOpen(true)}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "0.5rem",
+            background: atLimit ? "#1a1a1a" : "#a3e635",
+            color: atLimit ? "#444" : "#000",
+            border: atLimit ? "1px solid #2a2a2a" : "none",
+            borderRadius: "0.625rem",
+            padding: "0.65rem 1.25rem",
+            fontSize: "0.875rem", fontWeight: 700,
+            cursor: atLimit ? "not-allowed" : "pointer",
+            whiteSpace: "nowrap" as const,
+          }}
+        >
+          <span>+</span> Nuevo equipo
+        </button>
       </DialogTrigger>
       <DialogContent style={{ background: "#161616", border: "1px solid #2a2a2a", color: "white" }}>
         <DialogHeader>

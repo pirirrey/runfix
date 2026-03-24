@@ -114,7 +114,7 @@ export default async function CoachPendingPage() {
           }}>
             <span>🔔</span>
             <p style={{ color: "#f59e0b", fontSize: "0.8rem", lineHeight: 1.4 }}>
-              Estado: <strong>Pendiente de aprobación</strong>
+              Estado: <strong>Pendiente de activación inicial</strong>
             </p>
           </div>
         </div>
