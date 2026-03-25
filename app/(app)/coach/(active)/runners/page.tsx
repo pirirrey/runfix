@@ -285,7 +285,7 @@ export default function CoachRunnersPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const APP_URL = "https://trainplan.netlify.app";
+  const APP_URL = "https://runfix.com.ar";
 
   const inviteMessage = `🏃 ¡Hola! Te invito a unirte a *${teamName || "mi Running Team"}* en *Runfix*, la plataforma donde vas a poder ver tus planes de entrenamiento.
 
