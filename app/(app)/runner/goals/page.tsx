@@ -137,7 +137,7 @@ export default function RunnerGoalsPage() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundImage: "url('/images/fondo-objetivos.png')",
+      backgroundImage: "url('/images/fondo-objetivos.webp')",
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundColor: "rgba(0,0,0,0.75)",
