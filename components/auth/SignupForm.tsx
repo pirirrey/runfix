@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,6 +41,7 @@ const roles = [
 
 export function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanId>("starter");
 
@@ -48,6 +49,18 @@ export function SignupForm() {
     resolver: zodResolver(schema),
     defaultValues: { full_name: "", email: "", password: "", role: "runner" },
   });
+
+  // Pre-seleccionar rol y plan según query params de la landing
+  useEffect(() => {
+    const role = searchParams.get("role");
+    const plan = searchParams.get("plan");
+    if (role === "coach" || role === "runner") {
+      form.setValue("role", role);
+    }
+    if (plan && ["starter", "pro", "elite"].includes(plan)) {
+      setSelectedPlan(plan as PlanId);
+    }
+  }, [searchParams, form]);
 
   const selectedRole = form.watch("role");
   const errors = form.formState.errors;

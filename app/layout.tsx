@@ -11,6 +11,9 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Runfix",
   description: "Gestión de equipos de running",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

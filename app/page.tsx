@@ -18,6 +18,43 @@ const FEATURES = [
 export default function LandingPage() {
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0a0a" }}>
+      <style>{`
+        .plan-card {
+          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+          cursor: pointer;
+        }
+        .plan-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 32px rgba(163,230,53,0.13) !important;
+          border-color: rgba(163,230,53,0.5) !important;
+          background: #111c00 !important;
+        }
+        .plan-card:hover .plan-btn {
+          background: rgba(163,230,53,0.12) !important;
+          color: #a3e635 !important;
+          border-color: rgba(163,230,53,0.4) !important;
+        }
+        .plan-card-highlight:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 40px rgba(163,230,53,0.22) !important;
+        }
+      `}</style>
+      <style>{`
+        .runner-card {
+          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+          cursor: pointer;
+        }
+        .runner-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 32px rgba(96,165,250,0.13) !important;
+          border-color: rgba(96,165,250,0.5) !important;
+          background: rgba(96,165,250,0.07) !important;
+        }
+        .runner-card:hover .runner-btn {
+          background: rgba(96,165,250,0.18) !important;
+          border-color: rgba(96,165,250,0.5) !important;
+        }
+      `}</style>
 
       {/* Hero */}
       <section style={{ position: "relative", height: "70vh", overflow: "hidden" }}>
@@ -110,7 +147,7 @@ export default function LandingPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 24px 1fr 1fr 1fr", gap: "0", alignItems: "start" }}>
 
             {/* ── Columna Runner ── */}
-            <div style={{
+            <div className="runner-card" style={{
               background: "rgba(96,165,250,0.04)",
               border: "1px solid rgba(96,165,250,0.2)",
               borderRadius: "1.25rem",
@@ -163,10 +200,10 @@ export default function LandingPage() {
               </div>
 
               <div style={{ padding: "0 1.75rem 1.75rem" }}>
-                <Link href="/signup" style={{
+                <Link href="/signup?role=runner" className="runner-btn" style={{
                   display: "block", textAlign: "center", padding: "0.75rem",
                   borderRadius: "0.625rem", fontWeight: 700, fontSize: "0.875rem",
-                  textDecoration: "none",
+                  textDecoration: "none", transition: "all 0.18s ease",
                   background: "rgba(96,165,250,0.1)", color: "#60a5fa",
                   border: "1px solid rgba(96,165,250,0.25)",
                 }}>
@@ -203,7 +240,7 @@ export default function LandingPage() {
                 {PLANS.map((plan) => {
                   const cfg = PLAN_CONFIG[plan.id];
                   return (
-                    <div key={plan.id} style={{
+                    <div key={plan.id} className={plan.highlight ? "plan-card plan-card-highlight" : "plan-card"} style={{
                       background: plan.highlight ? "#0f1a00" : "#161616",
                       border: `1px solid ${plan.highlight ? "rgba(163,230,53,0.4)" : "#222"}`,
                       borderRadius: "1rem", overflow: "hidden",
@@ -258,10 +295,10 @@ export default function LandingPage() {
                       </div>
 
                       <div style={{ padding: "0 1.5rem 1.5rem" }}>
-                        <Link href="/signup" style={{
+                        <Link href={`/signup?role=coach&plan=${plan.id}`} className="plan-btn" style={{
                           display: "block", textAlign: "center", padding: "0.65rem",
                           borderRadius: "0.5rem", fontWeight: 700, fontSize: "0.82rem",
-                          textDecoration: "none",
+                          textDecoration: "none", transition: "all 0.18s ease",
                           background: plan.highlight ? "#a3e635" : "transparent",
                           color: plan.highlight ? "#000" : "#555",
                           border: plan.highlight ? "none" : "1px solid #2a2a2a",

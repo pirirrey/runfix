@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { SignupForm } from "@/components/auth/SignupForm";
 import Link from "next/link";
 
@@ -44,7 +45,9 @@ export default function SignupPage() {
             <h1 style={{ color: "white", fontSize: "1.6rem", fontWeight: 700, marginTop: "0.5rem" }}>Crear cuenta</h1>
             <p style={{ color: "#888", fontSize: "0.9rem", marginTop: "0.3rem" }}>Empezá a gestionar tus planes hoy</p>
           </div>
-          <SignupForm />
+          <Suspense fallback={null}>
+            <SignupForm />
+          </Suspense>
           <p style={{ color: "#666", fontSize: "0.85rem", textAlign: "center", marginTop: "1.5rem" }}>
             ¿Ya tenés cuenta?{" "}
             <Link href="/login" style={{ color: "#a3e635", textDecoration: "none", fontWeight: 600 }}>
