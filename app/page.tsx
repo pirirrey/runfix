@@ -38,8 +38,6 @@ export default function LandingPage() {
           transform: translateY(-4px);
           box-shadow: 0 8px 40px rgba(163,230,53,0.22) !important;
         }
-      `}</style>
-      <style>{`
         .runner-card {
           transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
           cursor: pointer;
@@ -53,6 +51,69 @@ export default function LandingPage() {
         .runner-card:hover .runner-btn {
           background: rgba(96,165,250,0.18) !important;
           border-color: rgba(96,165,250,0.5) !important;
+        }
+
+        /* ── Responsive ── */
+        .gallery-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1rem;
+        }
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 2rem;
+        }
+        .pricing-outer-grid {
+          display: grid;
+          grid-template-columns: 1fr 24px 1fr 1fr 1fr;
+          gap: 0;
+          align-items: start;
+        }
+        .pricing-separator {
+          display: flex;
+        }
+        .coach-plans-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 0.75rem;
+          padding: 0.75rem;
+        }
+
+        @media (max-width: 767px) {
+          .gallery-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+          }
+          .features-grid {
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+          }
+          .pricing-outer-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+          }
+          .pricing-separator {
+            display: none;
+          }
+          .coach-plans-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            padding: 0.75rem;
+          }
+          .pricing-coach-wrapper {
+            grid-column: auto !important;
+          }
+        }
+
+        @media (min-width: 480px) and (max-width: 767px) {
+          .gallery-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          .coach-plans-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
       `}</style>
 
@@ -93,7 +154,7 @@ export default function LandingPage() {
           <h2 style={{ fontSize: "1.8rem", fontWeight: 800, textAlign: "center", marginBottom: "2.5rem", color: "white" }}>
             Para corredores que van en serio
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+          <div className="gallery-grid">
             {PHOTOS.map((photo) => (
               <div key={photo.src} style={{ position: "relative", height: "15rem", borderRadius: "1rem", overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -117,7 +178,7 @@ export default function LandingPage() {
           <h2 style={{ fontSize: "1.8rem", fontWeight: 800, textAlign: "center", marginBottom: "3rem", color: "white" }}>
             Todo lo que necesitás
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
+          <div className="features-grid">
             {FEATURES.map((f) => (
               <div key={f.title} style={{ background: "#161616", borderRadius: "1rem", padding: "1.75rem", border: "1px solid #222", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 <div style={{ fontSize: "2rem" }}>{f.icon}</div>
@@ -144,7 +205,7 @@ export default function LandingPage() {
             Runners siempre gratis. Entrenadores eligen su plan.
           </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 24px 1fr 1fr 1fr", gap: "0", alignItems: "start" }}>
+          <div className="pricing-outer-grid">
 
             {/* ── Columna Runner ── */}
             <div className="runner-card" style={{
@@ -213,14 +274,14 @@ export default function LandingPage() {
             </div>
 
             {/* ── Separador visual ── */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "6rem", gap: "0.5rem" }}>
+            <div className="pricing-separator" style={{ flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "6rem", gap: "0.5rem" }}>
               <div style={{ width: "1px", height: "3rem", background: "linear-gradient(to bottom, transparent, #2a2a2a)" }} />
               <span style={{ color: "#333", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", writingMode: "vertical-rl", transform: "rotate(180deg)" }}>vs</span>
               <div style={{ width: "1px", height: "3rem", background: "linear-gradient(to top, transparent, #2a2a2a)" }} />
             </div>
 
             {/* ── Columnas Coach ── */}
-            <div style={{ gridColumn: "3 / 6", display: "flex", flexDirection: "column", gap: "0" }}>
+            <div className="pricing-coach-wrapper" style={{ gridColumn: "3 / 6", display: "flex", flexDirection: "column", gap: "0" }}>
 
               {/* Label coaches */}
               <div style={{
@@ -236,7 +297,7 @@ export default function LandingPage() {
               </div>
 
               {/* Grid de 3 planes */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", padding: "0.75rem", background: "rgba(163,230,53,0.03)", border: "1px solid rgba(163,230,53,0.12)", borderRadius: "0 0 1.25rem 1.25rem" }}>
+              <div className="coach-plans-grid" style={{ background: "rgba(163,230,53,0.03)", border: "1px solid rgba(163,230,53,0.12)", borderRadius: "0 0 1.25rem 1.25rem" }}>
                 {PLANS.map((plan) => {
                   const cfg = PLAN_CONFIG[plan.id];
                   return (
