@@ -24,6 +24,13 @@ export async function GET() {
     .select("id, full_name, team_name, plan_monthly_price, plan_monthly_due_day, plan_annual_price")
     .in("id", coachIds);
 
+  // Cuentas bancarias de cada coach
+  const { data: bankAccounts } = await supabase
+    .from("coach_bank_accounts")
+    .select("id, coach_id, bank_name, holder, cbu, alias")
+    .in("coach_id", coachIds)
+    .order("sort_order", { ascending: true });
+
   // Planes de pago
   const { data: plans } = await supabase
     .from("runner_payment_plans")
@@ -57,6 +64,7 @@ export async function GET() {
         monthly_due_day: (profile as { plan_monthly_due_day?: number | null } | undefined)?.plan_monthly_due_day ?? null,
         annual_price:    (profile as { plan_annual_price?: number | null } | undefined)?.plan_annual_price    ?? null,
       },
+      bank: (bankAccounts ?? []).filter(b => b.coach_id === coachId),
       receipts: coachReceipts,
     };
   });

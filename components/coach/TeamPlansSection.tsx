@@ -20,6 +20,7 @@ type RoutineRow = {
   id: string;
   training_date: string;   // "YYYY-MM-DD"
   routine: string;
+  km_estimated?: number | null;
 };
 
 type MonthCard = {
@@ -119,9 +120,28 @@ export function TeamPlansSection({ teamId, initialPlans, initialRoutines }: Prop
   // Which months are expanded
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  // "Add future month" picker
+  // "Add future month" — calcula automáticamente el siguiente mes
   const [showAddMonth, setShowAddMonth] = useState(false);
-  const [newMonthInput, setNewMonthInput] = useState("");
+
+  function nextSuggestedMonth(): string {
+    // Toma el último mes existente (de plans + extra) y sugiere el siguiente
+    const allKeys = [
+      ...plans.map(p => p.valid_from.slice(0, 7)),
+      ...extra,
+    ].sort();
+    let base: Date;
+    if (allKeys.length > 0) {
+      const last = allKeys[allKeys.length - 1];
+      const [y, m] = last.split("-").map(Number);
+      base = new Date(y, m, 1); // primer día del mes siguiente
+    } else {
+      const now = new Date();
+      base = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    }
+    const yy = base.getFullYear();
+    const mm = String(base.getMonth() + 1).padStart(2, "0");
+    return `${yy}-${mm}`;
+  }
 
   // Loading states
   const [uploading,   setUploading]   = useState(false);
@@ -199,12 +219,13 @@ export function TeamPlansSection({ teamId, initialPlans, initialRoutines }: Prop
   }
 
   /* ── Routines ───────────────────────────────────────── */
-  async function addRoutine(card: MonthCard, date: string, text: string) {
+  async function addRoutine(card: MonthCard, date: string, text: string, km: string) {
     if (!date || !text.trim()) { toast.error("Completá la fecha y la rutina"); return; }
     setSavingRut(true);
+    const kmVal = km.trim() !== "" ? parseFloat(km) : null;
     const res = await fetch(`/api/teams/${teamId}/routines`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ training_date: date, routine: text.trim() }),
+      body: JSON.stringify({ training_date: date, routine: text.trim(), km_estimated: kmVal }),
     });
     if (res.ok) {
       const r: RoutineRow = await res.json();
@@ -238,17 +259,18 @@ export function TeamPlansSection({ teamId, initialPlans, initialRoutines }: Prop
       {/* Picker de mes futuro */}
       {showAddMonth && (
         <div style={{ background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: "0.625rem", padding: "0.875rem 1.25rem", marginBottom: "1rem", display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-          <input type="month" value={newMonthInput} onChange={e => setNewMonthInput(e.target.value)}
-            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.4rem", padding: "0.4rem 0.75rem", color: "white", fontSize: "0.85rem", outline: "none", colorScheme: "dark" as const }} />
+          <span style={{ color: "#aaa", fontSize: "0.85rem" }}>
+            Estás por agregar la planificación de <strong style={{ color: "white" }}>{monthLabel(nextSuggestedMonth())}</strong>
+          </span>
           <button onClick={() => {
-            if (!newMonthInput) return;
-            setExtra(prev => prev.includes(newMonthInput) ? prev : [...prev, newMonthInput]);
-            setExpanded(prev => new Set([...prev, newMonthInput]));
-            setShowAddMonth(false); setNewMonthInput("");
+            const suggested = nextSuggestedMonth();
+            setExtra(prev => prev.includes(suggested) ? prev : [...prev, suggested]);
+            setExpanded(prev => new Set([...prev, suggested]));
+            setShowAddMonth(false);
           }} style={{ background: "#a3e635", border: "none", borderRadius: "0.4rem", color: "#000", fontSize: "0.82rem", fontWeight: 700, padding: "0.4rem 1rem", cursor: "pointer" }}>
-            Agregar
+            Confirmar
           </button>
-          <button onClick={() => { setShowAddMonth(false); setNewMonthInput(""); }}
+          <button onClick={() => { setShowAddMonth(false); }}
             style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", fontSize: "0.82rem", padding: "0.4rem 0.75rem", cursor: "pointer" }}>
             Cancelar
           </button>
@@ -282,8 +304,9 @@ export function TeamPlansSection({ teamId, initialPlans, initialRoutines }: Prop
             onDeletePlan={() => deletePlan(card.plan!.id)}
             onViewPdf={() => viewPdf(card.plan!.storage_path!)}
             onSaveNotes={(notes) => saveNotes(card.plan!.id, notes)}
-            onAddRoutine={(d, t) => addRoutine(card, d, t)}
+            onAddRoutine={(d, t, k) => addRoutine(card, d, t, k)}
             onDeleteRoutine={deleteRoutine}
+            teamId={teamId}
           />
         ))}
       </div>
@@ -311,8 +334,9 @@ interface CardProps {
   onDeletePlan: () => void;
   onViewPdf: () => void;
   onSaveNotes: (notes: string) => Promise<void>;
-  onAddRoutine: (date: string, text: string) => Promise<void>;
+  onAddRoutine: (date: string, text: string, km: string) => Promise<void>;
   onDeleteRoutine: (id: string) => Promise<void>;
+  teamId: string;
 }
 
 function MonthCardView({
@@ -321,7 +345,7 @@ function MonthCardView({
   onOpenUpload, onCloseUpload,
   onOpenRoutine, onCloseRoutine,
   uploading, savingNotes, savingRoutine, deletingRoutineId,
-  onUpload, onDeletePlan, onViewPdf, onSaveNotes, onAddRoutine, onDeleteRoutine,
+  onUpload, onDeletePlan, onViewPdf, onSaveNotes, onAddRoutine, onDeleteRoutine, teamId,
 }: CardProps) {
 
   // Local form state
@@ -331,10 +355,11 @@ function MonthCardView({
   const [notesVal,    setNotesVal]    = useState(card.plan?.notes ?? "");
   const [rutDate,     setRutDate]     = useState(todayStr);
   const [rutText,     setRutText]     = useState("");
+  const [rutKm,       setRutKm]       = useState("");
 
   useEffect(() => { setUploadNotes(card.plan?.notes ?? ""); setNotesVal(card.plan?.notes ?? ""); }, [card.plan?.notes]);
   useEffect(() => { if (!uploadOpen) { setUploadFile(null); } }, [uploadOpen]);
-  useEffect(() => { if (!routineOpen) { setRutText(""); } }, [routineOpen]);
+  useEffect(() => { if (!routineOpen) { setRutText(""); setRutKm(""); } }, [routineOpen]);
 
   const border = card.vigente
     ? "1px solid rgba(163,230,53,0.35)"
@@ -373,11 +398,19 @@ function MonthCardView({
           {/* Indicadores de contenido */}
           <div style={{ display: "flex", gap: "0.4rem" }}>
             {card.plan?.file_name && (
-              <span style={{ color: "#555", fontSize: "0.72rem" }}>📄 {card.plan.file_name}</span>
+              <span style={{ color: "#555", fontSize: "0.72rem" }}>📄 Plan de entrenamiento — {card.label}</span>
             )}
-            {card.routines.length > 0 && (
-              <span style={{ color: "#555", fontSize: "0.72rem" }}>· 🗓 {card.routines.length} rutina{card.routines.length > 1 ? "s" : ""}</span>
-            )}
+            {card.routines.length > 0 && (() => {
+              const totalKm = card.routines.reduce((acc, r) => acc + (r.km_estimated ?? 0), 0);
+              return (
+                <>
+                  <span style={{ color: "#555", fontSize: "0.72rem" }}>· 🗓 {card.routines.length} rutina{card.routines.length > 1 ? "s" : ""}</span>
+                  {totalKm > 0 && (
+                    <span style={{ color: "#a3e635", fontSize: "0.72rem", fontWeight: 700 }}>· 🏃 {totalKm % 1 === 0 ? totalKm : totalKm.toFixed(1)} km</span>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
         <span style={{ color: "#444", fontSize: "0.75rem", flexShrink: 0 }}>{expanded ? "▲" : "▼"}</span>
@@ -399,7 +432,7 @@ function MonthCardView({
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ color: "white", fontSize: "0.875rem", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                      {card.plan.file_name}
+                      Plan de entrenamiento — {card.label}
                     </p>
                     {card.plan.file_size && (
                       <p style={{ color: "#555", fontSize: "0.72rem", margin: "0.2rem 0 0 0" }}>{fmtSize(card.plan.file_size)}</p>
@@ -421,39 +454,6 @@ function MonthCardView({
                   </div>
                 </div>
 
-                {/* Indicaciones al grupo */}
-                {!uploadOpen && (
-                  <div style={{ marginTop: "0.875rem" }}>
-                    <p style={{ color: "#444", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", marginBottom: "0.4rem" }}>
-                      👥 Indicaciones al grupo
-                    </p>
-                    {editNotes ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        <textarea rows={3} value={notesVal} onChange={e => setNotesVal(e.target.value)}
-                          placeholder="Indicaciones para todos los runners de este equipo..."
-                          style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", padding: "0.6rem 0.75rem", color: "white", fontSize: "0.875rem", outline: "none", resize: "vertical", boxSizing: "border-box" as const }} />
-                        <div style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end" }}>
-                          <button onClick={() => { setEditNotes(false); setNotesVal(card.plan?.notes ?? ""); }}
-                            style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", fontSize: "0.78rem", padding: "0.35rem 0.75rem", cursor: "pointer" }}>
-                            Cancelar
-                          </button>
-                          <button onClick={async () => { await onSaveNotes(notesVal); setEditNotes(false); }}
-                            disabled={savingNotes === card.plan?.id}
-                            style={{ background: savingNotes === card.plan?.id ? "#1a1a1a" : "#a3e635", border: "none", borderRadius: "0.4rem", color: savingNotes === card.plan?.id ? "#444" : "#000", fontSize: "0.78rem", fontWeight: 700, padding: "0.35rem 0.875rem", cursor: "pointer" }}>
-                            {savingNotes === card.plan?.id ? "Guardando..." : "Guardar"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div onClick={() => setEditNotes(true)} style={{ cursor: "pointer" }}>
-                        {card.plan.notes
-                          ? <p style={{ color: "#aaa", fontSize: "0.84rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" as const }}>{card.plan.notes}</p>
-                          : <p style={{ color: "#444", fontSize: "0.82rem", fontStyle: "italic", margin: 0 }}>+ Agregar indicaciones al grupo</p>
-                        }
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             ) : (
               !uploadOpen && (
@@ -505,10 +505,18 @@ function MonthCardView({
                 🗓 Rutinas de entrenamiento
               </p>
               {!routineOpen && (
-                <button onClick={onOpenRoutine}
-                  style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", fontSize: "0.72rem", fontWeight: 600, padding: "0.25rem 0.625rem", cursor: "pointer" }}>
-                  + Agregar
-                </button>
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  {card.routines.length > 0 && (
+                    <a href={`/coach/teams/${teamId}/print?month=${card.key}`} target="_blank" rel="noreferrer"
+                      style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", fontSize: "0.72rem", fontWeight: 600, padding: "0.25rem 0.625rem", cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                      ⬇ Descargar
+                    </a>
+                  )}
+                  <button onClick={onOpenRoutine}
+                    style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", fontSize: "0.72rem", fontWeight: 600, padding: "0.25rem 0.625rem", cursor: "pointer" }}>
+                    + Agregar
+                  </button>
+                </div>
               )}
             </div>
 
@@ -523,6 +531,11 @@ function MonthCardView({
                         {isToday ? "Hoy" : fmtDate(r.training_date)}
                       </span>
                       <p style={{ flex: 1, color: "#bbb", fontSize: "0.82rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" as const }}>{r.routine}</p>
+                      {r.km_estimated != null && (
+                        <span style={{ flexShrink: 0, fontSize: "0.7rem", fontWeight: 700, color: "#a3e635", background: "rgba(163,230,53,0.08)", border: "1px solid rgba(163,230,53,0.2)", borderRadius: "2rem", padding: "0.1rem 0.5rem", whiteSpace: "nowrap" as const }}>
+                          {r.km_estimated} km
+                        </span>
+                      )}
                       <button onClick={() => onDeleteRoutine(r.id)} disabled={deletingRoutineId === r.id}
                         style={{ background: "transparent", border: "none", color: "#333", cursor: "pointer", fontSize: "0.8rem", flexShrink: 0, padding: "0.1rem 0.25rem" }}>
                         {deletingRoutineId === r.id ? "…" : "✕"}
@@ -540,7 +553,7 @@ function MonthCardView({
             {/* Formulario agregar rutina */}
             {routineOpen && (
               <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", padding: "0.875rem", background: "#111", borderRadius: "0.5rem", border: "1px solid #1e1e1e" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "0.75rem", alignItems: "start" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: "0.75rem", alignItems: "start" }}>
                   <div>
                     <label style={{ display: "block", color: "#666", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
                       Fecha
@@ -557,13 +570,21 @@ function MonthCardView({
                       placeholder={"Ej: 15 min precalentamiento\n3 × 1000m al 85%\n15 min vuelta a la calma"}
                       style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", padding: "0.5rem 0.75rem", color: "white", fontSize: "0.82rem", outline: "none", resize: "vertical", boxSizing: "border-box" as const }} />
                   </div>
+                  <div>
+                    <label style={{ display: "block", color: "#666", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
+                      KM estimados
+                    </label>
+                    <input type="number" min="0" step="0.5" value={rutKm} onChange={e => setRutKm(e.target.value)}
+                      placeholder="0"
+                      style={{ width: "5rem", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.4rem", padding: "0.45rem 0.75rem", color: "white", fontSize: "0.85rem", outline: "none" }} />
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end" }}>
-                  <button onClick={() => { onCloseRoutine(); setRutText(""); }}
+                  <button onClick={() => { onCloseRoutine(); setRutText(""); setRutKm(""); }}
                     style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", fontSize: "0.78rem", padding: "0.35rem 0.75rem", cursor: "pointer" }}>
                     Cancelar
                   </button>
-                  <button onClick={async () => { await onAddRoutine(rutDate, rutText); setRutText(""); }}
+                  <button onClick={async () => { await onAddRoutine(rutDate, rutText, rutKm); setRutText(""); setRutKm(""); }}
                     disabled={savingRoutine}
                     style={{ background: savingRoutine ? "#1a1a1a" : "#a3e635", border: "none", borderRadius: "0.4rem", color: savingRoutine ? "#444" : "#000", fontSize: "0.78rem", fontWeight: 700, padding: "0.35rem 0.875rem", cursor: savingRoutine ? "not-allowed" : "pointer" }}>
                     {savingRoutine ? "Guardando..." : "Guardar rutina"}
@@ -572,6 +593,41 @@ function MonthCardView({
               </div>
             )}
           </div>
+
+          {/* ── Indicaciones al grupo ────────────────────── */}
+          {card.plan && !uploadOpen && (
+            <div style={{ padding: "1rem 1.25rem", borderTop: "1px solid #161616" }}>
+              <p style={{ color: "#444", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", marginBottom: "0.4rem" }}>
+                👥 Indicaciones al grupo
+              </p>
+              {editNotes ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <textarea rows={3} value={notesVal} onChange={e => setNotesVal(e.target.value)}
+                    placeholder="Indicaciones para todos los runners de este equipo..."
+                    style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", padding: "0.6rem 0.75rem", color: "white", fontSize: "0.875rem", outline: "none", resize: "vertical", boxSizing: "border-box" as const }} />
+                  <div style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end" }}>
+                    <button onClick={() => { setEditNotes(false); setNotesVal(card.plan?.notes ?? ""); }}
+                      style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", fontSize: "0.78rem", padding: "0.35rem 0.75rem", cursor: "pointer" }}>
+                      Cancelar
+                    </button>
+                    <button onClick={async () => { await onSaveNotes(notesVal); setEditNotes(false); }}
+                      disabled={savingNotes === card.plan?.id}
+                      style={{ background: savingNotes === card.plan?.id ? "#1a1a1a" : "#a3e635", border: "none", borderRadius: "0.4rem", color: savingNotes === card.plan?.id ? "#444" : "#000", fontSize: "0.78rem", fontWeight: 700, padding: "0.35rem 0.875rem", cursor: "pointer" }}>
+                      {savingNotes === card.plan?.id ? "Guardando..." : "Guardar"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div onClick={() => setEditNotes(true)} style={{ cursor: "pointer" }}>
+                  {card.plan.notes
+                    ? <p style={{ color: "#aaa", fontSize: "0.84rem", lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" as const }}>{card.plan.notes}</p>
+                    : <p style={{ color: "#444", fontSize: "0.82rem", fontStyle: "italic", margin: 0 }}>+ Agregar indicaciones al grupo</p>
+                  }
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       )}
     </div>

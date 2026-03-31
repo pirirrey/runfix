@@ -1,13 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 
 import { DeleteTeamButton } from "@/components/coach/DeleteTeamButton";
 import { EditTeamGeneralForm } from "@/components/coach/EditTeamGeneralForm";
 import { AddRunnerToTeamPanel } from "@/components/coach/AddRunnerToTeamPanel";
 import { TeamPlansSection } from "@/components/coach/TeamPlansSection";
 import { RunnerNotesList } from "@/components/coach/RunnerNotesList";
+import { TeamAccordionSection } from "@/components/coach/TeamAccordionSection";
 
 export default async function TeamDetailPage({
   params,
@@ -146,14 +146,10 @@ export default async function TeamDetailPage({
           <DeleteTeamButton teamId={team.id} teamName={team.name} runnerCount={memberships?.length ?? 0} />
         </div>
 
-        {/* Datos del equipo */}
-        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", overflow: "hidden" }}>
-          <div style={{ padding: "1.25rem 1.75rem", borderBottom: "1px solid #1e1e1e" }}>
-            <p style={{ color: "#a3e635", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
-              Perfil del equipo
-            </p>
-          </div>
-          <div style={{ padding: "1.25rem 1.75rem" }}>
+        {/* Secciones acordeón */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+
+          <TeamAccordionSection icon="✏️" title="Perfil del equipo">
             <EditTeamGeneralForm
               teamId={team.id}
               initialName={team.name}
@@ -162,62 +158,38 @@ export default async function TeamDetailPage({
               initialPdfPath={team.team_pdf_path}
               teamPdfUrl={teamPdfUrl}
             />
-          </div>
-        </div>
+          </TeamAccordionSection>
 
-        {/* Planes del equipo */}
-        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", overflow: "hidden" }}>
-          <div style={{ padding: "1.25rem 1.75rem", borderBottom: "1px solid #1e1e1e" }}>
-            <p style={{ color: "#a3e635", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
-              Planificación
-            </p>
-            <p style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: "0.25rem 0 0 0" }}>
-              Planes de entrenamiento del equipo
-            </p>
-            <p style={{ color: "#555", fontSize: "0.8rem", margin: "0.2rem 0 0 0" }}>
-              Todos los runners del equipo ven el plan vigente
-            </p>
-          </div>
-          <div style={{ padding: "1.5rem 1.75rem" }}>
+          <TeamAccordionSection icon="📋" title="Planificación">
             <TeamPlansSection teamId={team.id} initialPlans={teamPlans ?? []} initialRoutines={routines ?? []} />
-          </div>
-        </div>
+          </TeamAccordionSection>
 
-        {/* Runners actuales */}
-        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", overflow: "hidden" }}>
-          <div style={{ padding: "1.25rem 1.75rem", borderBottom: "1px solid #1e1e1e", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <p style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: 0 }}>Runners en este equipo</p>
-            <Badge variant="secondary">{memberships?.length ?? 0}</Badge>
-          </div>
+          <TeamAccordionSection icon="🏃" title="Runners en este equipo" badge={memberships?.length ?? 0}>
+            {memberships?.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
+                <p style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🏃</p>
+                <p style={{ color: "#666", fontSize: "0.875rem" }}>No hay runners en este equipo todavía.</p>
+                <p style={{ color: "#444", fontSize: "0.8rem", marginTop: "0.3rem" }}>Agregá runners desde el panel de abajo.</p>
+              </div>
+            ) : (
+              <RunnerNotesList
+                teamId={teamId}
+                members={(memberships ?? []).map((m) => ({
+                  membershipId: m.id,
+                  runnerId: m.profiles.id,
+                  name: m.profiles.full_name ?? m.profiles.email,
+                  email: m.profiles.email,
+                  joinedAt: m.joined_at,
+                  coachNotes: m.coach_notes,
+                }))}
+              />
+            )}
+          </TeamAccordionSection>
 
-          {memberships?.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
-              <p style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>🏃</p>
-              <p style={{ color: "#666", fontSize: "0.875rem" }}>No hay runners en este equipo todavía.</p>
-              <p style={{ color: "#444", fontSize: "0.8rem", marginTop: "0.3rem" }}>Agregá runners desde el panel de abajo.</p>
-            </div>
-          ) : (
-            <RunnerNotesList
-              teamId={teamId}
-              members={(memberships ?? []).map((m) => ({
-                membershipId: m.id,
-                runnerId: m.profiles.id,
-                name: m.profiles.full_name ?? m.profiles.email,
-                email: m.profiles.email,
-                joinedAt: m.joined_at,
-                coachNotes: m.coach_notes,
-              }))}
-            />
-          )}
-        </div>
+          <TeamAccordionSection icon="➕" title="Agregar runners al equipo" badge={poolRunners.length}>
+            <AddRunnerToTeamPanel teamId={team.id} poolRunners={poolRunners} />
+          </TeamAccordionSection>
 
-        {/* Panel: agregar runners desde pool */}
-        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", overflow: "hidden" }}>
-          <div style={{ padding: "1.25rem 1.75rem", borderBottom: "1px solid #1e1e1e" }}>
-            <p style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: 0 }}>Agregar runners al equipo</p>
-            <p style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.2rem" }}>Runners de tu pool que aún no están en este equipo</p>
-          </div>
-          <AddRunnerToTeamPanel teamId={team.id} poolRunners={poolRunners} />
         </div>
       </div>
     </div>

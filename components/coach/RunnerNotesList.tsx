@@ -113,23 +113,6 @@ export function RunnerNotesList({ teamId, members: initialMembers }: Props) {
                 <span style={{ color: "#444", fontSize: "0.72rem" }}>
                   {new Date(m.joinedAt).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}
                 </span>
-                {!isEditing && (
-                  <button
-                    onClick={() => startEdit(m)}
-                    style={{
-                      background: m.coachNotes ? "rgba(163,230,53,0.08)" : "#1a1a1a",
-                      border: `1px solid ${m.coachNotes ? "rgba(163,230,53,0.2)" : "#2a2a2a"}`,
-                      borderRadius: "0.4rem",
-                      padding: "0.3rem 0.7rem",
-                      color: m.coachNotes ? "#a3e635" : "#666",
-                      fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: "0.35rem",
-                    }}
-                  >
-                    <span>📝</span>
-                    <span>{m.coachNotes ? "Ver / editar" : "Indicaciones"}</span>
-                  </button>
-                )}
                 <button
                   onClick={() => setConfirmRemove(m)}
                   disabled={removing === m.membershipId}

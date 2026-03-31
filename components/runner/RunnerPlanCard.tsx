@@ -16,7 +16,7 @@ export type RunnerMonthData = {
     notes: string | null;
     signedUrl: string | null;
   } | null;
-  routines: { id: string; training_date: string; routine: string }[];
+  routines: { id: string; training_date: string; routine: string; km_estimated?: number | null }[];
   status: "current" | "upcoming" | "past";
   vigente: boolean;
 };
@@ -112,9 +112,10 @@ export function RunnerPlanCard({ months, coachNotes, teamId }: Props) {
                   </span>
                 )}
 
-                <div style={{ display: "flex", gap: "0.4rem" }}>
+                <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
                   {m.plan?.file_name && <span style={{ color: "#555", fontSize: "0.7rem" }}>📄</span>}
                   {m.routines.length > 0 && <span style={{ color: "#555", fontSize: "0.7rem" }}>🗓 {m.routines.length}</span>}
+                  {(() => { const km = m.routines.reduce((a, r) => a + (r.km_estimated ?? 0), 0); return km > 0 ? <span style={{ color: "#a3e635", fontSize: "0.7rem", fontWeight: 700 }}>· 🏃 {km % 1 === 0 ? km : km.toFixed(1)} km</span> : null; })()}
                 </div>
               </div>
 
@@ -133,7 +134,7 @@ export function RunnerPlanCard({ months, coachNotes, teamId }: Props) {
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ color: "white", fontWeight: 700, fontSize: "0.875rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                          📄 {m.plan.file_name}
+                          📄 Plan de entrenamiento — {m.label}
                         </p>
                         <p style={{ color: "#555", fontSize: "0.75rem", margin: "0.2rem 0 0 0" }}>
                           {fmtRange(m.plan.valid_from, m.plan.valid_until)}
@@ -195,7 +196,12 @@ export function RunnerPlanCard({ months, coachNotes, teamId }: Props) {
                           <span style={{ flexShrink: 0, fontSize: "0.7rem", fontWeight: 700, padding: "0.15rem 0.55rem", borderRadius: "2rem", whiteSpace: "nowrap" as const, background: isToday ? "rgba(163,230,53,0.12)" : "rgba(96,165,250,0.07)", border: `1px solid ${isToday ? "rgba(163,230,53,0.3)" : "rgba(96,165,250,0.18)"}`, color: isToday ? "#a3e635" : "#60a5fa" }}>
                             {isToday ? "Hoy" : fmtDate(r.training_date)}
                           </span>
-                          <p style={{ color: "#bbb", fontSize: "0.83rem", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" as const }}>{r.routine}</p>
+                          <p style={{ flex: 1, color: "#bbb", fontSize: "0.83rem", lineHeight: 1.65, margin: 0, whiteSpace: "pre-wrap" as const }}>{r.routine}</p>
+                          {r.km_estimated != null && r.km_estimated > 0 && (
+                            <span style={{ flexShrink: 0, fontSize: "0.68rem", fontWeight: 700, color: "#a3e635", background: "rgba(163,230,53,0.08)", border: "1px solid rgba(163,230,53,0.2)", borderRadius: "2rem", padding: "0.1rem 0.45rem", whiteSpace: "nowrap" as const }}>
+                              {r.km_estimated % 1 === 0 ? r.km_estimated : r.km_estimated.toFixed(1)} km
+                            </span>
+                          )}
                         </div>
                       );
                     })}

@@ -29,9 +29,9 @@ export function TeamMessagePanel({ teamId }: Props) {
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState<string | null>(null);
 
-  // Mínimo: mañana
-  const tomorrow = (() => {
-    const d = new Date(); d.setDate(d.getDate() + 1);
+  // Mínimo: hoy
+  const today = (() => {
+    const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   })();
 
@@ -129,7 +129,7 @@ export function TeamMessagePanel({ teamId }: Props) {
             </p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "0.875rem", paddingTop: "0.75rem" }}>
-              {messages.map(msg => {
+              {messages.filter(msg => daysLeft(msg.expires_at) >= 0).map(msg => {
                 const dl = daysLeft(msg.expires_at);
                 const exp = expiryLabel(dl);
                 const isExpired = dl < 0;
@@ -155,14 +155,18 @@ export function TeamMessagePanel({ teamId }: Props) {
                         onClick={() => handleDelete(msg.id)}
                         disabled={deleting === msg.id}
                         style={{
-                          background: "transparent", border: "none",
-                          color: "#333", cursor: "pointer", fontSize: "0.75rem",
-                          padding: "0.1rem 0.25rem", flexShrink: 0,
-                          opacity: deleting === msg.id ? 0.5 : 1,
+                          background: "rgba(248,113,113,0.08)",
+                          border: "1px solid rgba(248,113,113,0.2)",
+                          borderRadius: "0.375rem",
+                          color: "#f87171", cursor: "pointer", fontSize: "0.72rem",
+                          padding: "0.25rem 0.5rem", flexShrink: 0,
+                          opacity: deleting === msg.id ? 0.4 : 1,
+                          fontWeight: 600,
+                          transition: "all 0.15s",
                         }}
                         title="Eliminar mensaje"
                       >
-                        ✕
+                        {deleting === msg.id ? "..." : "🗑 Eliminar"}
                       </button>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.4rem" }}>
@@ -197,25 +201,23 @@ export function TeamMessagePanel({ teamId }: Props) {
                   fontFamily: "inherit",
                 }}
               />
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.25rem" }}>
-                    Visible hasta
-                  </label>
-                  <input
-                    type="date"
-                    value={expiresAt}
-                    onChange={e => setExpiresAt(e.target.value)}
-                    min={tomorrow}
-                    required
-                    style={{
-                      width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a",
-                      borderRadius: "0.5rem", padding: "0.55rem 0.75rem",
-                      color: "white", fontSize: "0.82rem", outline: "none",
-                      boxSizing: "border-box", colorScheme: "dark" as React.CSSProperties["colorScheme"],
-                    }}
-                  />
-                </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.25rem" }}>
+                  Visible hasta
+                </label>
+                <input
+                  type="date"
+                  value={expiresAt}
+                  onChange={e => setExpiresAt(e.target.value)}
+                  min={today}
+                  required
+                  style={{
+                    width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a",
+                    borderRadius: "0.5rem", padding: "0.55rem 0.75rem",
+                    color: "white", fontSize: "0.82rem", outline: "none",
+                    boxSizing: "border-box", colorScheme: "dark" as React.CSSProperties["colorScheme"],
+                  }}
+                />
               </div>
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <button

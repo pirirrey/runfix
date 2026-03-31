@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { RunnerMessage } from "@/app/api/runner/messages/route";
 
 function expiryLabel(daysLeft: number): { text: string; color: string } {
-  if (daysLeft === 0) return { text: "Vence hoy",    color: "#fbbf24" };
+  if (daysLeft <= 0)  return { text: "Vence hoy",    color: "#fbbf24" };
   if (daysLeft === 1) return { text: "Vence mañana", color: "#fbbf24" };
   if (daysLeft <= 3)  return { text: `${daysLeft} días`, color: "#fb923c" };
   return                     { text: `${daysLeft} días`, color: "#555"   };
@@ -155,23 +155,39 @@ export function RunnerMessageBell() {
             {messages.map(msg => {
               const exp = expiryLabel(msg.days_left);
               const almostExpiring = msg.days_left <= 3;
+              const isPersonal = msg.is_personal;
               return (
                 <div key={msg.id} style={{
-                  background: almostExpiring ? "rgba(251,191,36,0.04)" : "rgba(96,165,250,0.04)",
-                  border: `1px solid ${almostExpiring ? "rgba(251,191,36,0.15)" : "rgba(96,165,250,0.12)"}`,
+                  background: isPersonal
+                    ? "rgba(163,230,53,0.04)"
+                    : almostExpiring ? "rgba(251,191,36,0.04)" : "rgba(96,165,250,0.04)",
+                  border: `1px solid ${isPersonal
+                    ? "rgba(163,230,53,0.2)"
+                    : almostExpiring ? "rgba(251,191,36,0.15)" : "rgba(96,165,250,0.12)"}`,
                   borderRadius: "0.625rem",
                   padding: "0.875rem 1rem",
                 }}>
-                  {/* Team badge */}
+                  {/* Badge */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                    <span style={{
-                      background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.2)",
-                      color: "#60a5fa", borderRadius: "2rem",
-                      fontSize: "0.65rem", fontWeight: 700,
-                      padding: "0.05rem 0.5rem",
-                    }}>
-                      👥 {msg.team_name}
-                    </span>
+                    {isPersonal ? (
+                      <span style={{
+                        background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.25)",
+                        color: "#a3e635", borderRadius: "2rem",
+                        fontSize: "0.65rem", fontWeight: 700,
+                        padding: "0.05rem 0.5rem",
+                      }}>
+                        💌 Solo para vos · {msg.team_name}
+                      </span>
+                    ) : (
+                      <span style={{
+                        background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.2)",
+                        color: "#60a5fa", borderRadius: "2rem",
+                        fontSize: "0.65rem", fontWeight: 700,
+                        padding: "0.05rem 0.5rem",
+                      }}>
+                        👥 {msg.team_name}
+                      </span>
+                    )}
                     <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
                       <span style={{ color: "#333", fontSize: "0.65rem" }}>
                         📅 {new Date(msg.expires_at + "T00:00:00").toLocaleDateString("es-AR", { day: "numeric", month: "short" })}

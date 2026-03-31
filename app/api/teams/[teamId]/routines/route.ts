@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const { data, error } = await supabase
     .from("daily_routines")
-    .select("id, training_date, routine, created_at, updated_at")
+    .select("id, training_date, routine, km_estimated, created_at, updated_at")
     .eq("team_id", teamId)
     .order("training_date", { ascending: true });
 
@@ -27,7 +27,6 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  // Verificar que el usuario es coach de este equipo
   const { data: team } = await supabase
     .from("teams")
     .select("coach_id")
@@ -39,7 +38,11 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   const body = await req.json();
-  const { training_date, routine } = body as { training_date?: string; routine?: string };
+  const { training_date, routine, km_estimated } = body as {
+    training_date?: string;
+    routine?: string;
+    km_estimated?: number | null;
+  };
 
   if (!training_date || !routine?.trim()) {
     return NextResponse.json({ error: "Fecha y rutina son obligatorias" }, { status: 400 });
@@ -47,7 +50,13 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { data, error } = await supabase
     .from("daily_routines")
-    .insert({ coach_id: user.id, team_id: teamId, training_date, routine: routine.trim() })
+    .insert({
+      coach_id: user.id,
+      team_id: teamId,
+      training_date,
+      routine: routine.trim(),
+      km_estimated: km_estimated ?? null,
+    })
     .select()
     .single();
 

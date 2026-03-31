@@ -73,6 +73,10 @@ export default function CoachRunnersPage() {
 
   type ModalConfig = { title: string; body: string; confirmLabel: string; variant: ConfirmVariant; onConfirm: () => void };
   const [modal, setModal] = useState<ModalConfig | null>(null);
+  const [msgOpen, setMsgOpen] = useState<string | null>(null); // runner id con panel abierto
+  const [msgText, setMsgText] = useState("");
+  const [msgExpiry, setMsgExpiry] = useState("");
+  const [msgSending, setMsgSending] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -258,6 +262,25 @@ export default function CoachRunnersPage() {
         setSuspending(null);
       },
     });
+  };
+
+  const sendDirectMessage = async (runnerId: string) => {
+    if (!msgText.trim() || !msgExpiry) return;
+    setMsgSending(true);
+    const res = await fetch(`/api/coach/runners/${runnerId}/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msgText, expires_at: msgExpiry }),
+    });
+    setMsgSending(false);
+    if (res.ok) {
+      setMsgOpen(null); setMsgText(""); setMsgExpiry("");
+      const { toast } = await import("sonner");
+      toast.success("Mensaje enviado ✓");
+    } else {
+      const { toast } = await import("sonner");
+      toast.error("Error al enviar el mensaje");
+    }
   };
 
   const getMembershipForTeam = (runnerId: string, teamId: string) =>
@@ -717,9 +740,56 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
                     >
                       Quitar
                     </button>
+                    <button
+                      onClick={() => { setMsgOpen(msgOpen === cr.runner.id ? null : cr.runner.id); setMsgText(""); setMsgExpiry(""); }}
+                      title="Enviar mensaje individual"
+                      style={{ background: msgOpen === cr.runner.id ? "rgba(163,230,53,0.1)" : "transparent", border: msgOpen === cr.runner.id ? "1px solid rgba(163,230,53,0.3)" : "1px solid #1e1e1e", borderRadius: "0.35rem", color: msgOpen === cr.runner.id ? "#a3e635" : "#555", padding: "0.3rem 0.55rem", cursor: "pointer", fontSize: "0.8rem" }}
+                    >
+                      💌
+                    </button>
                   </div>
                 </div>
 
+                {/* Panel mensaje individual inline */}
+                {msgOpen === cr.runner.id && (
+                  <div style={{ margin: "0.5rem 0 0.25rem 0", padding: "0.85rem 1rem", background: "rgba(163,230,53,0.04)", border: "1px solid rgba(163,230,53,0.12)", borderRadius: "0.5rem" }}>
+                    <p style={{ margin: "0 0 0.6rem 0", fontSize: "0.72rem", color: "#a3e635", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      💌 Mensaje individual para {cr.runner.full_name?.split(" ")[0] ?? "el runner"}
+                    </p>
+                    <textarea
+                      value={msgText}
+                      onChange={e => setMsgText(e.target.value)}
+                      placeholder="Escribí el mensaje..."
+                      rows={2}
+                      style={{ width: "100%", background: "#0d0d0d", border: "1px solid #222", borderRadius: "0.4rem", color: "#fff", fontSize: "0.82rem", padding: "0.5rem 0.7rem", resize: "vertical", boxSizing: "border-box", marginBottom: "0.5rem" }}
+                    />
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                        <label style={{ fontSize: "0.67rem", color: "#555", textTransform: "uppercase", letterSpacing: "0.05em" }}>Visible hasta</label>
+                        <input
+                          type="date"
+                          value={msgExpiry}
+                          min={new Date().toISOString().split("T")[0]}
+                          onChange={e => setMsgExpiry(e.target.value)}
+                          style={{ background: "#0d0d0d", border: "1px solid #222", borderRadius: "0.4rem", color: "#fff", fontSize: "0.8rem", padding: "0.35rem 0.6rem" }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => sendDirectMessage(cr.runner.id)}
+                        disabled={msgSending || !msgText.trim() || !msgExpiry}
+                        style={{ marginTop: "1rem", padding: "0.4rem 1rem", background: msgSending || !msgText.trim() || !msgExpiry ? "#1a1a1a" : "#a3e635", color: msgSending || !msgText.trim() || !msgExpiry ? "#444" : "#000", border: "none", borderRadius: "0.4rem", fontWeight: 700, fontSize: "0.78rem", cursor: msgSending || !msgText.trim() || !msgExpiry ? "not-allowed" : "pointer" }}
+                      >
+                        {msgSending ? "Enviando…" : "Enviar mensaje"}
+                      </button>
+                      <button
+                        onClick={() => { setMsgOpen(null); setMsgText(""); setMsgExpiry(""); }}
+                        style={{ marginTop: "1rem", padding: "0.4rem 0.8rem", background: "transparent", color: "#555", border: "1px solid #1e1e1e", borderRadius: "0.4rem", fontSize: "0.78rem", cursor: "pointer" }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

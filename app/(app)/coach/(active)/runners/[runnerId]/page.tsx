@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { RunnerPaymentPanel } from "@/components/coach/RunnerPaymentPanel";
-import { RunnerVenuePicker } from "@/components/coach/RunnerVenuePicker";
+import { RunnerProfileAccordion } from "@/components/coach/RunnerProfileAccordion";
 
 type Params = { runnerId: string };
 
@@ -205,162 +204,17 @@ export default async function RunnerProfileCoachView({
         </div>
       </div>
 
-      {/* Sede de entrenamiento */}
-      <section style={{
-        background: "#111", border: "1px solid #1e1e1e",
-        borderRadius: "0.875rem", padding: "1.5rem", marginBottom: "1.25rem",
-      }}>
-        <p style={{ color: "#444", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1rem" }}>
-          📍 Sede de entrenamiento
-        </p>
-        <RunnerVenuePicker
-          runnerId={runnerId}
-          venues={venues ?? []}
-          currentVenueIds={currentVenueIds}
-        />
-      </section>
-
-      {/* Datos personales */}
-      <section style={{
-        background: "#111", border: "1px solid #1e1e1e",
-        borderRadius: "0.875rem", padding: "1.5rem", marginBottom: "1.25rem",
-      }}>
-        <p style={{ color: "#444", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1.25rem" }}>
-          Datos personales
-        </p>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.25rem" }}>
-
-          {/* Nombre */}
-          <div>
-            <p style={fieldLabel}>Nombre</p>
-            <p style={fieldValue}>{profile.first_name || "—"}</p>
-          </div>
-
-          {/* Apellido */}
-          <div>
-            <p style={fieldLabel}>Apellido</p>
-            <p style={fieldValue}>{profile.last_name || "—"}</p>
-          </div>
-
-          {/* Sexo */}
-          <div>
-            <p style={fieldLabel}>Sexo</p>
-            <p style={fieldValue}>
-              {profile.gender ? (genderLabel[profile.gender] ?? profile.gender) : "—"}
-            </p>
-          </div>
-
-          {/* Edad */}
-          <div>
-            <p style={fieldLabel}>Edad</p>
-            <p style={fieldValue}>
-              {age !== null ? `${age} años` : "—"}
-              {profile.birth_date && (
-                <span style={{ color: "#444", fontSize: "0.78rem", marginLeft: "0.4rem" }}>
-                  ({formatDate(profile.birth_date)})
-                </span>
-              )}
-            </p>
-          </div>
-
-          {/* Teléfono */}
-          {profile.phone && (
-            <div>
-              <p style={fieldLabel}>Teléfono</p>
-              <p style={fieldValue}>{profile.phone}</p>
-            </div>
-          )}
-
-        </div>
-      </section>
-
-      {/* Certificado médico */}
-      <section style={{
-        background: "#111", border: "1px solid #1e1e1e",
-        borderRadius: "0.875rem", padding: "1.5rem",
-      }}>
-        <p style={{ color: "#444", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "1.25rem" }}>
-          Certificado médico
-        </p>
-
-        {!latestCert ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "1rem", background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "0.625rem" }}>
-            <span style={{ fontSize: "1.25rem" }}>⚠</span>
-            <div>
-              <p style={{ color: "#f87171", fontSize: "0.875rem", fontWeight: 600, margin: 0 }}>Sin certificado cargado</p>
-              <p style={{ color: "#666", fontSize: "0.78rem", margin: "0.2rem 0 0 0" }}>El runner aún no subió su apto médico.</p>
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {certsWithUrls.map((cert, idx) => {
-              const status = certStatusInfo(cert.expires_at);
-              return (
-                <div
-                  key={cert.id}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "1rem",
-                    padding: "0.875rem 1rem",
-                    background: idx === 0 ? status.bg : "transparent",
-                    border: `1px solid ${idx === 0 ? status.border : "#1e1e1e"}`,
-                    borderRadius: "0.625rem",
-                    opacity: idx === 0 ? 1 : 0.5,
-                  }}
-                >
-                  {/* Ícono estado */}
-                  <span style={{
-                    width: "2rem", height: "2rem", borderRadius: "50%", flexShrink: 0,
-                    background: idx === 0 ? status.bg : "rgba(255,255,255,0.04)",
-                    border: `1px solid ${idx === 0 ? status.border : "#222"}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.85rem", color: idx === 0 ? status.color : "#444",
-                  }}>
-                    {status.icon}
-                  </span>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ color: idx === 0 ? "white" : "#555", fontSize: "0.875rem", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {cert.file_name}
-                    </p>
-                    <p style={{ color: idx === 0 ? status.color : "#444", fontSize: "0.78rem", margin: "0.2rem 0 0 0", fontWeight: 600 }}>
-                      {status.label} — vence el {formatDate(cert.expires_at)}
-                    </p>
-                  </div>
-
-                  {/* Botón ver */}
-                  {cert.signedUrl && idx === 0 && (
-                    <a
-                      href={cert.signedUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: "rgba(163,230,53,0.08)",
-                        border: "1px solid rgba(163,230,53,0.2)",
-                        borderRadius: "0.4rem", color: "#a3e635",
-                        padding: "0.35rem 0.875rem", fontSize: "0.78rem",
-                        fontWeight: 600, textDecoration: "none",
-                        whiteSpace: "nowrap", flexShrink: 0,
-                      }}
-                    >
-                      Ver PDF
-                    </a>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Plan de pago */}
-      <RunnerPaymentPanel
+      <RunnerProfileAccordion
         runnerId={runnerId}
-        initialPlanType={paymentPlan?.plan_type ?? "monthly"}
-        initialNotes={paymentPlan?.notes ?? null}
-        initialDiscountPct={paymentPlan?.discount_pct ?? 0}
-        receipts={paymentReceipts ?? []}
+        runnerName={profile.first_name ?? profile.full_name?.split(" ")[0] ?? "el runner"}
+        profile={profile}
+        age={age}
+        certs={certsWithUrls}
+        latestCert={latestCert}
+        venues={venues ?? []}
+        currentVenueIds={currentVenueIds}
+        paymentPlan={paymentPlan ?? null}
+        paymentReceipts={paymentReceipts ?? []}
         coachPricing={{
           monthly_price:   coachPricing?.plan_monthly_price   ?? null,
           monthly_due_day: coachPricing?.plan_monthly_due_day ?? null,

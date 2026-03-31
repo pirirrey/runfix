@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { PrintButton } from "@/components/runner/PrintButton";
 
 function fmtDate(d: string) {
@@ -9,45 +9,38 @@ function fmtDate(d: string) {
 }
 function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-export default async function PrintRoutinesPage({
+export default async function CoachPrintRoutinesPage({
+  params,
   searchParams,
 }: {
-  searchParams: Promise<{ teamId?: string; month?: string }>;
+  params: Promise<{ teamId: string }>;
+  searchParams: Promise<{ month?: string }>;
 }) {
-  const { teamId, month } = await searchParams;
-  if (!teamId || !month) redirect("/runner/plans");
+  const { teamId } = await params;
+  const { month } = await searchParams;
+  if (!month) redirect(`/coach/teams/${teamId}`);
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Verificar membresía
-  const { data: membership } = await supabase
-    .from("team_memberships")
-    .select("coach_notes")
-    .eq("team_id", teamId)
-    .eq("runner_id", user.id)
-    .single<{ coach_notes: string | null }>();
-
-  if (!membership) redirect("/runner/plans");
-
-  // Equipo
+  // Verificar que el coach es dueño del equipo
   const { data: team } = await supabase
     .from("teams")
     .select("name, coach_id")
     .eq("id", teamId)
     .single<{ name: string; coach_id: string }>();
 
-  if (!team) redirect("/runner/plans");
+  if (!team || team.coach_id !== user.id) notFound();
 
   // Perfil del coach
   const { data: coach } = await supabase
     .from("profiles")
     .select("team_name, team_logo_path, full_name")
-    .eq("id", team.coach_id)
+    .eq("id", user.id)
     .single<{ team_name: string | null; team_logo_path: string | null; full_name: string | null }>();
 
-  // Logo del equipo
+  // Logo
   let logoUrl: string | null = null;
   if (coach?.team_logo_path) {
     const { data } = await supabase.storage.from("training-plans").createSignedUrl(coach.team_logo_path, 7200);
@@ -64,7 +57,7 @@ export default async function PrintRoutinesPage({
     .order("training_date", { ascending: true })
     .returns<{ id: string; training_date: string; routine: string; km_estimated: number | null }[]>();
 
-  // Plan del mes (notas al grupo + nombre PDF)
+  // Plan del mes
   const { data: plan } = await supabase
     .from("training_plans")
     .select("notes, file_name")
@@ -74,7 +67,7 @@ export default async function PrintRoutinesPage({
     .is("runner_id", null)
     .maybeSingle<{ notes: string | null; file_name: string | null }>();
 
-  const teamName  = coach?.team_name || team.name;
+  const teamName = coach?.team_name || team.name;
   const monthLabel = capitalize(
     new Date(`${month}-01T00:00:00`).toLocaleDateString("es-AR", { month: "long", year: "numeric" })
   );
@@ -97,7 +90,6 @@ export default async function PrintRoutinesPage({
 
         {/* ── Cabecera ─────────────────────────────────── */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", gap: "1rem" }}>
-          {/* Logo + nombre */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.875rem" }}>
             <div style={{ width: "3.5rem", height: "3.5rem", borderRadius: "0.5rem", overflow: "hidden", background: "#f0f0f0", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>
               {logoUrl
@@ -111,7 +103,6 @@ export default async function PrintRoutinesPage({
               )}
             </div>
           </div>
-          {/* Mes + km total */}
           <div style={{ textAlign: "right" }}>
             <p style={{ color: "#aaa", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Planificación</p>
             <p style={{ fontWeight: 800, fontSize: "1.15rem", color: "#1e2431", margin: "0.15rem 0 0 0" }}>{monthLabel}</p>
@@ -136,16 +127,6 @@ export default async function PrintRoutinesPage({
           </div>
         )}
 
-        {/* ── Indicaciones personales ──────────────────── */}
-        {membership.coach_notes && (
-          <div style={{ marginBottom: "1.75rem", padding: "0.875rem 1rem", background: "#f0f4ff", borderRadius: "0.5rem", border: "1px solid #c5d3f5" }}>
-            <p style={{ color: "#3b5cc5", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.5rem 0" }}>
-              📝 Mis indicaciones
-            </p>
-            <p style={{ color: "#333", fontSize: "0.9rem", lineHeight: 1.75, margin: 0, whiteSpace: "pre-wrap" }}>{membership.coach_notes}</p>
-          </div>
-        )}
-
         {/* ── Rutinas ──────────────────────────────────── */}
         {hasRoutines ? (
           <div>
@@ -155,7 +136,6 @@ export default async function PrintRoutinesPage({
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               {(routines ?? []).map((r, i) => (
                 <div key={r.id}>
-                  {/* Fecha + km */}
                   <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
                     <span style={{ fontWeight: 800, fontSize: "0.9rem", color: "#1e2431", textTransform: "capitalize" }}>
                       {fmtDate(r.training_date)}
@@ -167,7 +147,6 @@ export default async function PrintRoutinesPage({
                     )}
                     <div style={{ flex: 1, height: "1px", background: "#e5e5e5" }} />
                   </div>
-                  {/* Rutina */}
                   <p style={{ color: "#222", fontSize: "0.925rem", lineHeight: 1.8, margin: 0, whiteSpace: "pre-wrap", paddingLeft: "1rem", borderLeft: "3px solid #a3e635" }}>
                     {r.routine}
                   </p>
@@ -182,14 +161,6 @@ export default async function PrintRoutinesPage({
           <p style={{ color: "#aaa", fontSize: "0.9rem", textAlign: "center", padding: "2rem 0" }}>
             No hay rutinas cargadas para este mes.
           </p>
-        )}
-
-        {/* ── PDF del plan (referencia) ─────────────────── */}
-        {plan?.file_name && (
-          <div style={{ marginTop: "2rem", padding: "0.625rem 1rem", background: "#fafafa", borderRadius: "0.4rem", border: "1px solid #eee", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "1rem" }}>📄</span>
-            <span style={{ color: "#888", fontSize: "0.8rem" }}>Plan de entrenamiento — {monthLabel}</span>
-          </div>
         )}
 
         {/* ── Footer ───────────────────────────────────── */}

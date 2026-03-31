@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
 import { CoachPlanConfig } from "@/components/coach/CoachPlanConfig";
+import { CoachBankAccountsPanel } from "@/components/coach/CoachBankAccountsPanel";
 import { PLANS, PLAN_CONFIG, PLAN_LIMITS, type PlanId } from "@/lib/plans";
 
 type Profile = {
@@ -118,6 +119,7 @@ export function CoachSettingsClient({ profile }: Props) {
   // Acordeón — sección abierta por defecto: "general"
   const [open, setOpen] = useState<Record<string, boolean>>({
     general: false,
+    bank: false,
     plans: false,
     subscription: false,
   });
@@ -394,7 +396,19 @@ export function CoachSettingsClient({ profile }: Props) {
           </form>
         </AccordionSection>
 
-        {/* ── 2. Planes de pago ── */}
+        {/* ── 2. Datos bancarios ── */}
+        <AccordionSection
+          id="bank"
+          icon="🏦"
+          title="Cuentas bancarias"
+          subtitle="CBU, alias y titular para que tus runners puedan transferir"
+          open={open.bank}
+          onToggle={() => toggle("bank")}
+        >
+          <CoachBankAccountsPanel />
+        </AccordionSection>
+
+        {/* ── 3. Planes de pago ── */}
         <AccordionSection
           id="plans"
           icon="💳"

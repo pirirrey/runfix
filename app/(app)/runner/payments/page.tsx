@@ -24,10 +24,19 @@ type Pricing = {
   annual_price:    number | null;
 };
 
+type BankAccount = {
+  id: string;
+  bank_name: string;
+  holder: string | null;
+  cbu: string | null;
+  alias: string | null;
+};
+
 type CoachData = {
   coach:   { id: string; full_name: string | null; team_name: string | null; joined_at: string | null };
   plan:    { plan_type: PlanType; amount: number | null; notes: string | null; discount_pct: number | null };
   pricing: Pricing;
+  bank:    BankAccount[];
   receipts: Receipt[];
 };
 
@@ -353,6 +362,47 @@ export default function RunnerPaymentsPage() {
               </div>
             </div>
 
+            {/* Datos bancarios — múltiples cuentas */}
+            {item.bank.length > 0 && (
+              <div style={{ padding: "0.875rem 1.5rem", borderBottom: "1px solid #1a1a1a", background: "#0d0d0d", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                <span style={{ color: "#555", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em" }}>🏦 Datos para transferir</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {item.bank.map(acc => (
+                    <div key={acc.id} style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem", alignItems: "center", background: "#111", border: "1px solid #1a1a1a", borderRadius: "0.5rem", padding: "0.65rem 0.875rem" }}>
+                      <div>
+                        <p style={{ color: "#444", fontSize: "0.65rem", margin: "0 0 0.1rem 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Banco</p>
+                        <p style={{ color: "white", fontSize: "0.82rem", fontWeight: 700, margin: 0 }}>{acc.bank_name}</p>
+                      </div>
+                      {acc.holder && (
+                        <div>
+                          <p style={{ color: "#444", fontSize: "0.65rem", margin: "0 0 0.1rem 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Titular</p>
+                          <p style={{ color: "#ccc", fontSize: "0.82rem", fontWeight: 500, margin: 0 }}>{acc.holder}</p>
+                        </div>
+                      )}
+                      {acc.cbu && (
+                        <div>
+                          <p style={{ color: "#444", fontSize: "0.65rem", margin: "0 0 0.1rem 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>CBU / CVU</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                            <p style={{ color: "#a3e635", fontSize: "0.82rem", fontWeight: 700, margin: 0, fontFamily: "monospace", letterSpacing: "0.03em" }}>{acc.cbu}</p>
+                            <CopyButton value={acc.cbu} />
+                          </div>
+                        </div>
+                      )}
+                      {acc.alias && (
+                        <div>
+                          <p style={{ color: "#444", fontSize: "0.65rem", margin: "0 0 0.1rem 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Alias</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                            <p style={{ color: "#a3e635", fontSize: "0.82rem", fontWeight: 700, margin: 0 }}>{acc.alias}</p>
+                            <CopyButton value={acc.alias} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Cuerpo */}
             {pt === "exempt" ? (
               <div style={{ padding: "1.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -531,6 +581,33 @@ export default function RunnerPaymentsPage() {
       })}
     </main>
     </div>
+  );
+}
+
+// Botón copiar al portapapeles
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+  return (
+    <button
+      onClick={copy}
+      title="Copiar"
+      style={{
+        background: copied ? "rgba(163,230,53,0.15)" : "transparent",
+        border: "none", borderRadius: "0.3rem",
+        color: copied ? "#a3e635" : "#555",
+        cursor: "pointer", padding: "0.1rem 0.3rem",
+        fontSize: "0.75rem", lineHeight: 1,
+        transition: "all 0.15s",
+      }}
+    >
+      {copied ? "✓" : "⎘"}
+    </button>
   );
 }
 

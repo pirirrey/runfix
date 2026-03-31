@@ -84,12 +84,12 @@ export default async function RunnerPlansPage() {
   }
 
   // Rutinas de los equipos (todas, para agrupar por mes)
-  type RoutineRow = { id: string; team_id: string; training_date: string; routine: string };
+  type RoutineRow = { id: string; team_id: string; training_date: string; routine: string; km_estimated?: number | null };
   let allRoutines: RoutineRow[] = [];
   if (teamIds.length > 0) {
     const { data } = await supabase
       .from("daily_routines")
-      .select("id, team_id, training_date, routine")
+      .select("id, team_id, training_date, routine, km_estimated")
       .in("team_id", teamIds)
       .order("training_date", { ascending: true })
       .returns<RoutineRow[]>();
