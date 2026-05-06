@@ -251,17 +251,21 @@ export default function RunnerPaymentsPage() {
 
   return (
     <div style={bgStyle}>
-    <main style={{ padding: "2rem", maxWidth: "52rem", margin: "0 auto" }}>
+    <main className="page-wrap" style={{ padding: "2.5rem 2rem", maxWidth: "52rem", margin: "0 auto" }}>
 
+      {/* Header */}
       <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ color: "white", fontSize: "1.5rem", fontWeight: 800, margin: 0 }}>Mis Pagos</h1>
-        <p style={{ color: "#555", fontSize: "0.875rem", margin: "0.4rem 0 0 0" }}>
+        <p style={{ color: "#a3e635", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>
+          Mi perfil
+        </p>
+        <h1 className="page-title" style={{ color: "white", fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0 }}>Mis Pagos</h1>
+        <p style={{ color: "#666", fontSize: "0.9rem", marginTop: "0.35rem" }}>
           Registrá tus comprobantes de pago por entrenamiento.
         </p>
       </div>
 
       {data.length === 0 ? (
-        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", padding: "3rem", textAlign: "center" }}>
+        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", padding: "3rem", textAlign: "center" }}>
           <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>💳</div>
           <p style={{ color: "#888", fontSize: "0.95rem" }}>No tenés coaches asociados actualmente.</p>
         </div>
@@ -270,63 +274,45 @@ export default function RunnerPaymentsPage() {
         const coachName = item.coach.team_name || item.coach.full_name || "Coach";
 
         return (
-          <div key={item.coach.id} style={{ marginBottom: "1.5rem", background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", overflow: "hidden" }}>
+          <div key={item.coach.id} style={{ marginBottom: "1.25rem", background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", overflow: "hidden" }}>
 
-            {/* Header del coach */}
-            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-              <div>
-                <p style={{ color: "white", fontWeight: 700, fontSize: "0.975rem", margin: 0 }}>{coachName}</p>
-                {item.coach.team_name && item.coach.full_name && (
-                  <p style={{ color: "#555", fontSize: "0.78rem", margin: "0.2rem 0 0 0" }}>{item.coach.full_name}</p>
-                )}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
-                {/* Badge plan */}
+            {/* ── Header del coach ── */}
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #1a1a1a" }}>
+              {/* Nombre equipo + coach */}
+              <p style={{ color: "white", fontWeight: 800, fontSize: "1rem", margin: "0 0 0.15rem 0" }}>{coachName}</p>
+              {item.coach.team_name && item.coach.full_name && (
+                <p style={{ color: "#555", fontSize: "0.78rem", margin: "0 0 0.875rem 0" }}>{item.coach.full_name}</p>
+              )}
+
+              {/* Badge plan + precio en fila */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
                 <span style={{
                   background: planBg[pt], border: `1px solid ${planBorder[pt]}`,
-                  color: planColor[pt], fontSize: "0.75rem", fontWeight: 700,
-                  padding: "0.25rem 0.75rem", borderRadius: "2rem",
+                  color: planColor[pt], fontSize: "0.7rem", fontWeight: 700,
+                  padding: "0.2rem 0.65rem", borderRadius: "2rem",
                 }}>
                   {planLabel[pt]}
                 </span>
 
-                {/* Precio con descuento opcional */}
                 {pt === "monthly" && item.pricing.monthly_price != null && (() => {
                   const base = item.pricing.monthly_price;
                   const disc = item.plan.discount_pct ?? 0;
                   const final = Math.round(base * (1 - disc / 100));
                   return (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.2rem" }}>
-                      {disc > 0 ? (
-                        <>
-                          {/* Original tachado */}
-                          <span style={{ color: "#444", fontSize: "0.72rem", textDecoration: "line-through" }}>
-                            ${base.toLocaleString("es-AR")} / mes
-                          </span>
-                          {/* Descuento badge + precio final */}
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                            <span style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24", fontSize: "0.68rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: "2rem" }}>
-                              {disc}% off
-                            </span>
-                            <span style={{ color: "#a3e635", fontSize: "0.88rem", fontWeight: 800 }}>
-                              ${final.toLocaleString("es-AR")} / mes
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <span style={{ color: "#888", fontSize: "0.78rem", fontWeight: 600 }}>
-                          ${base.toLocaleString("es-AR")} / mes
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+                      {disc > 0 && (
+                        <span style={{ color: "#444", fontSize: "0.72rem", textDecoration: "line-through" }}>
+                          ${base.toLocaleString("es-AR")}
                         </span>
                       )}
-                      {/* Fecha de vencimiento */}
-                      {item.pricing.monthly_due_day != null && (
-                        <span style={{ color: "#555", fontSize: "0.72rem" }}>
-                          vence el{" "}
-                          <span style={{ color: "#a3e635", fontWeight: 700 }}>
-                            {formatDueDate(item.pricing.monthly_due_day)}
-                          </span>
+                      {disc > 0 && (
+                        <span style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24", fontSize: "0.65rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: "2rem" }}>
+                          {disc}% off
                         </span>
                       )}
+                      <span style={{ color: "#a3e635", fontSize: "0.9rem", fontWeight: 800 }}>
+                        ${final.toLocaleString("es-AR")} / mes
+                      </span>
                     </div>
                   );
                 })()}
@@ -336,63 +322,78 @@ export default function RunnerPaymentsPage() {
                   const disc = item.plan.discount_pct ?? 0;
                   const final = Math.round(base * (1 - disc / 100));
                   return (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.2rem" }}>
-                      {disc > 0 ? (
-                        <>
-                          <span style={{ color: "#444", fontSize: "0.72rem", textDecoration: "line-through" }}>
-                            ${base.toLocaleString("es-AR")} / año
-                          </span>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                            <span style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24", fontSize: "0.68rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: "2rem" }}>
-                              {disc}% off
-                            </span>
-                            <span style={{ color: "#a3e635", fontSize: "0.88rem", fontWeight: 800 }}>
-                              ${final.toLocaleString("es-AR")} / año
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <span style={{ color: "#888", fontSize: "0.78rem", fontWeight: 600 }}>
-                          ${base.toLocaleString("es-AR")} / año
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+                      {disc > 0 && (
+                        <span style={{ color: "#444", fontSize: "0.72rem", textDecoration: "line-through" }}>
+                          ${base.toLocaleString("es-AR")}
                         </span>
                       )}
+                      {disc > 0 && (
+                        <span style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)", color: "#fbbf24", fontSize: "0.65rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: "2rem" }}>
+                          {disc}% off
+                        </span>
+                      )}
+                      <span style={{ color: "#a3e635", fontSize: "0.9rem", fontWeight: 800 }}>
+                        ${final.toLocaleString("es-AR")} / año
+                      </span>
                     </div>
                   );
                 })()}
               </div>
+
+              {/* Vencimiento */}
+              {pt === "monthly" && item.pricing.monthly_due_day != null && (
+                <p style={{ color: "#555", fontSize: "0.72rem", margin: "0.4rem 0 0 0" }}>
+                  vence el{" "}
+                  <span style={{ color: "#a3e635", fontWeight: 700 }}>
+                    {formatDueDate(item.pricing.monthly_due_day)}
+                  </span>
+                </p>
+              )}
             </div>
 
-            {/* Datos bancarios — múltiples cuentas */}
+            {/* ── Datos bancarios ── */}
             {item.bank.length > 0 && (
-              <div style={{ padding: "0.875rem 1.5rem", borderBottom: "1px solid #1a1a1a", background: "#0d0d0d", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-                <span style={{ color: "#555", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em" }}>🏦 Datos para transferir</span>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  {item.bank.map(acc => (
-                    <div key={acc.id} style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem", alignItems: "center", background: "#111", border: "1px solid #1a1a1a", borderRadius: "0.5rem", padding: "0.65rem 0.875rem" }}>
+              <div style={{ borderBottom: "1px solid #1a1a1a", background: "#0a0a0a" }}>
+                {/* Label sección */}
+                <div style={{ padding: "0.75rem 1.5rem 0.5rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <span style={{ fontSize: "0.8rem" }}>🏦</span>
+                  <span style={{ color: "#3a3a3a", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                    Datos para transferir
+                  </span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+                  {item.bank.map((acc, i) => (
+                    <div key={acc.id} style={{
+                      display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(7rem, 1fr))",
+                      gap: "0.875rem 1.5rem",
+                      padding: "0.875rem 1.5rem",
+                      borderTop: i > 0 ? "1px solid #161616" : "1px solid #1a1a1a",
+                    }}>
                       <div>
-                        <p style={{ color: "#444", fontSize: "0.65rem", margin: "0 0 0.1rem 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Banco</p>
-                        <p style={{ color: "white", fontSize: "0.82rem", fontWeight: 700, margin: 0 }}>{acc.bank_name}</p>
+                        <p style={{ color: "#3a3a3a", fontSize: "0.62rem", margin: "0 0 0.2rem 0", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Banco</p>
+                        <p style={{ color: "white", fontSize: "0.85rem", fontWeight: 700, margin: 0 }}>{acc.bank_name}</p>
                       </div>
                       {acc.holder && (
                         <div>
-                          <p style={{ color: "#444", fontSize: "0.65rem", margin: "0 0 0.1rem 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Titular</p>
-                          <p style={{ color: "#ccc", fontSize: "0.82rem", fontWeight: 500, margin: 0 }}>{acc.holder}</p>
+                          <p style={{ color: "#3a3a3a", fontSize: "0.62rem", margin: "0 0 0.2rem 0", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Titular</p>
+                          <p style={{ color: "#bbb", fontSize: "0.85rem", fontWeight: 500, margin: 0 }}>{acc.holder}</p>
                         </div>
                       )}
                       {acc.cbu && (
                         <div>
-                          <p style={{ color: "#444", fontSize: "0.65rem", margin: "0 0 0.1rem 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>CBU / CVU</p>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                            <p style={{ color: "#a3e635", fontSize: "0.82rem", fontWeight: 700, margin: 0, fontFamily: "monospace", letterSpacing: "0.03em" }}>{acc.cbu}</p>
+                          <p style={{ color: "#3a3a3a", fontSize: "0.62rem", margin: "0 0 0.2rem 0", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>CBU / CVU</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                            <p style={{ color: "#a3e635", fontSize: "0.85rem", fontWeight: 700, margin: 0, fontFamily: "monospace" }}>{acc.cbu}</p>
                             <CopyButton value={acc.cbu} />
                           </div>
                         </div>
                       )}
                       {acc.alias && (
                         <div>
-                          <p style={{ color: "#444", fontSize: "0.65rem", margin: "0 0 0.1rem 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Alias</p>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                            <p style={{ color: "#a3e635", fontSize: "0.82rem", fontWeight: 700, margin: 0 }}>{acc.alias}</p>
+                          <p style={{ color: "#3a3a3a", fontSize: "0.62rem", margin: "0 0 0.2rem 0", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Alias</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                            <p style={{ color: "#a3e635", fontSize: "0.85rem", fontWeight: 700, margin: 0 }}>{acc.alias}</p>
                             <CopyButton value={acc.alias} />
                           </div>
                         </div>
@@ -403,7 +404,7 @@ export default function RunnerPaymentsPage() {
               </div>
             )}
 
-            {/* Cuerpo */}
+            {/* ── Cuerpo: meses ── */}
             {pt === "exempt" ? (
               <div style={{ padding: "1.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
                 <span style={{ fontSize: "1.5rem" }}>✅</span>
@@ -412,51 +413,65 @@ export default function RunnerPaymentsPage() {
                 </p>
               </div>
             ) : (
-              <div style={{ padding: "0.75rem 0" }}>
+              <div style={{ padding: "0.5rem 0" }}>
                 {getMonthsFrom(item.coach.joined_at).map((month) => {
                   const receipt = item.receipts.find((r) => r.payment_month.slice(0, 7) === month.value.slice(0, 7));
                   const isActiveUploadMonth = activeUpload?.coachId === item.coach.id && activeUpload?.month === month.value;
 
                   return (
-                    <div key={month.value} style={{ borderBottom: "1px solid #161616" }}>
+                    <div key={month.value} style={{ borderBottom: "1px solid #141414" }}>
                       {/* Fila del mes */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 1.5rem" }}>
-                        {/* Estado */}
-                        <div style={{ width: "1.5rem", height: "1.5rem", borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800, background: receipt ? "rgba(163,230,53,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${receipt ? "rgba(163,230,53,0.3)" : "#222"}`, color: receipt ? "#a3e635" : "#444" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.875rem", padding: "0.7rem 1.5rem", flexWrap: "wrap" }}>
+                        {/* Indicador estado */}
+                        <div style={{
+                          width: "1.5rem", height: "1.5rem", borderRadius: "50%", flexShrink: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "0.72rem", fontWeight: 800,
+                          background: receipt ? "rgba(163,230,53,0.12)" : "rgba(255,255,255,0.03)",
+                          border: `1px solid ${receipt ? "rgba(163,230,53,0.3)" : "#1e1e1e"}`,
+                          color: receipt ? "#a3e635" : "#333",
+                        }}>
                           {receipt ? "✓" : "·"}
                         </div>
 
                         {/* Mes */}
-                        <span style={{ color: receipt ? "white" : "#666", fontSize: "0.875rem", fontWeight: receipt ? 600 : 400, flex: 1 }}>
+                        <span style={{ color: receipt ? "white" : "#555", fontSize: "0.875rem", fontWeight: receipt ? 600 : 400, flex: 1, minWidth: "7rem" }}>
                           {month.label}
                         </span>
 
-                        {/* Info del comprobante */}
+                        {/* Info comprobante existente */}
                         {receipt && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <span style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "2rem", color: "#888", fontSize: "0.72rem", padding: "0.15rem 0.6rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                            <span style={{ background: "#1a1a1a", border: "1px solid #222", borderRadius: "2rem", color: "#777", fontSize: "0.7rem", padding: "0.15rem 0.55rem" }}>
                               {methodIcon[receipt.method]} {methodLabel[receipt.method]}
                             </span>
-                            <span style={{ color: "#555", fontSize: "0.75rem" }}>
+                            <span style={{ color: "#444", fontSize: "0.72rem" }}>
                               {formatDate(receipt.payment_date)}
                             </span>
                             {receipt.storage_path && <SignedLink path={receipt.storage_path} supabase={supabase} />}
                             <button
                               onClick={() => deleteReceipt(receipt.id)}
                               disabled={deleting === receipt.id}
-                              style={{ background: "transparent", border: "none", color: "#444", cursor: "pointer", fontSize: "0.8rem", padding: "0.1rem 0.3rem" }}
+                              style={{ background: "transparent", border: "none", color: "#333", cursor: "pointer", fontSize: "0.78rem", padding: "0.1rem 0.3rem", lineHeight: 1 }}
                               title="Eliminar comprobante"
                             >
-                              {deleting === receipt.id ? "..." : "✕"}
+                              {deleting === receipt.id ? "…" : "✕"}
                             </button>
                           </div>
                         )}
 
-                        {/* Botón subir */}
+                        {/* Botón subir comprobante */}
                         {!receipt && !isActiveUploadMonth && (
                           <button
                             onClick={() => openUpload(item.coach.id, month.value)}
-                            style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", fontSize: "0.75rem", fontWeight: 600, padding: "0.3rem 0.75rem", cursor: "pointer" }}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                              background: "#a3e635", border: "none",
+                              borderRadius: "0.5rem", color: "#000",
+                              fontSize: "0.75rem", fontWeight: 700,
+                              padding: "0.4rem 0.875rem", cursor: "pointer",
+                              whiteSpace: "nowrap" as const,
+                            }}
                           >
                             + Subir comprobante
                           </button>
@@ -464,35 +479,35 @@ export default function RunnerPaymentsPage() {
 
                         {/* Cerrar form */}
                         {isActiveUploadMonth && (
-                          <button onClick={closeUpload} style={{ background: "transparent", border: "none", color: "#444", cursor: "pointer", fontSize: "0.85rem" }}>✕</button>
+                          <button onClick={closeUpload} style={{ background: "transparent", border: "1px solid #222", borderRadius: "0.4rem", color: "#444", cursor: "pointer", fontSize: "0.8rem", padding: "0.25rem 0.5rem", lineHeight: 1 }}>✕</button>
                         )}
                       </div>
 
                       {/* Formulario inline */}
                       {isActiveUploadMonth && (
                         <div style={{ padding: "1rem 1.5rem 1.25rem", background: "#0d0d0d", borderTop: "1px solid #1a1a1a", display: "flex", flexDirection: "column", gap: "0.875rem" }}>
-                          <p style={{ color: "#a3e635", fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", margin: 0 }}>
+                          <p style={{ color: "#a3e635", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
                             Comprobante — {month.label}
                           </p>
 
                           {/* Fecha + Método */}
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                          <div className="grid-2-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                             <div>
-                              <label style={{ display: "block", color: "#666", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
+                              <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
                                 Fecha de pago
                               </label>
                               <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)}
-                                style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", padding: "0.5rem 0.75rem", color: "white", fontSize: "0.875rem", outline: "none", colorScheme: "dark", boxSizing: "border-box" }}
+                                style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", padding: "0.5rem 0.75rem", color: "white", fontSize: "0.875rem", outline: "none", colorScheme: "dark", boxSizing: "border-box" as const }}
                               />
                             </div>
                             <div>
-                              <label style={{ display: "block", color: "#666", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
+                              <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
                                 Forma de pago
                               </label>
                               <div style={{ display: "flex", gap: "0.4rem" }}>
                                 {(["transfer", "cash", "other"] as Method[]).map((m) => (
                                   <button key={m} onClick={() => setFormMethod(m)}
-                                    style={{ flex: 1, padding: "0.45rem 0.4rem", borderRadius: "0.4rem", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", background: formMethod === m ? "rgba(163,230,53,0.12)" : "#1a1a1a", border: `1px solid ${formMethod === m ? "rgba(163,230,53,0.35)" : "#2a2a2a"}`, color: formMethod === m ? "#a3e635" : "#555" }}>
+                                    style={{ flex: 1, padding: "0.45rem 0.4rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", background: formMethod === m ? "rgba(163,230,53,0.12)" : "#1a1a1a", border: `1px solid ${formMethod === m ? "rgba(163,230,53,0.35)" : "#2a2a2a"}`, color: formMethod === m ? "#a3e635" : "#555" }}>
                                     {methodIcon[m]}
                                   </button>
                                 ))}
@@ -504,7 +519,7 @@ export default function RunnerPaymentsPage() {
                           {/* Archivo */}
                           {formMethod !== "cash" && (
                             <div>
-                              <label style={{ display: "block", color: "#666", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.4rem" }}>
+                              <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.4rem" }}>
                                 Adjuntar comprobante
                               </label>
                               <label
@@ -526,22 +541,14 @@ export default function RunnerPaymentsPage() {
                                 {formFile ? (
                                   <>
                                     <span style={{ fontSize: "1.4rem" }}>📄</span>
-                                    <span style={{ color: "#a3e635", fontSize: "0.82rem", fontWeight: 700, textAlign: "center" }}>
-                                      {formFile.name}
-                                    </span>
-                                    <span style={{ color: "#555", fontSize: "0.72rem" }}>
-                                      {(formFile.size / 1024).toFixed(0)} KB · click para cambiar
-                                    </span>
+                                    <span style={{ color: "#a3e635", fontSize: "0.82rem", fontWeight: 700, textAlign: "center" }}>{formFile.name}</span>
+                                    <span style={{ color: "#555", fontSize: "0.72rem" }}>{(formFile.size / 1024).toFixed(0)} KB · click para cambiar</span>
                                   </>
                                 ) : (
                                   <>
                                     <span style={{ fontSize: "1.4rem" }}>⬆️</span>
-                                    <span style={{ color: "#666", fontSize: "0.82rem", fontWeight: 600 }}>
-                                      Arrastrá o hacé click para adjuntar
-                                    </span>
-                                    <span style={{ color: "#444", fontSize: "0.72rem" }}>
-                                      PDF, PNG, JPG — máx. 10 MB
-                                    </span>
+                                    <span style={{ color: "#666", fontSize: "0.82rem", fontWeight: 600 }}>Arrastrá o hacé click para adjuntar</span>
+                                    <span style={{ color: "#444", fontSize: "0.72rem" }}>PDF, PNG, JPG — máx. 10 MB</span>
                                   </>
                                 )}
                               </label>
@@ -550,22 +557,23 @@ export default function RunnerPaymentsPage() {
 
                           {/* Notas */}
                           <div>
-                            <label style={{ display: "block", color: "#666", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
+                            <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.3rem" }}>
                               Notas (opcional)
                             </label>
                             <input type="text" value={formNotes} onChange={(e) => setFormNotes(e.target.value)}
                               placeholder="Ej: Pago julio — transferencia Mercado Pago"
-                              style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", padding: "0.5rem 0.75rem", color: "white", fontSize: "0.875rem", outline: "none", boxSizing: "border-box" }}
+                              style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.45rem", padding: "0.5rem 0.75rem", color: "white", fontSize: "0.875rem", outline: "none", boxSizing: "border-box" as const }}
                             />
                           </div>
 
                           {/* Acciones */}
                           <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                            <button onClick={closeUpload} style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#666", padding: "0.45rem 1rem", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+                            <button onClick={closeUpload}
+                              style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.625rem", color: "#555", padding: "0.65rem 1.25rem", fontSize: "0.875rem", fontWeight: 700, cursor: "pointer" }}>
                               Cancelar
                             </button>
                             <button onClick={submitReceipt} disabled={uploading}
-                              style={{ background: uploading ? "#1a1a1a" : "#a3e635", border: "none", borderRadius: "0.4rem", color: uploading ? "#444" : "#000", padding: "0.45rem 1.25rem", fontSize: "0.82rem", fontWeight: 700, cursor: uploading ? "not-allowed" : "pointer" }}>
+                              style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: uploading ? "#1a1a1a" : "#a3e635", border: "none", borderRadius: "0.625rem", color: uploading ? "#444" : "#000", padding: "0.65rem 1.25rem", fontSize: "0.875rem", fontWeight: 700, cursor: uploading ? "not-allowed" : "pointer" }}>
                               {uploading ? "Subiendo..." : "Confirmar pago"}
                             </button>
                           </div>
