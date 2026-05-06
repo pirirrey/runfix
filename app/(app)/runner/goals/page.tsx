@@ -135,24 +135,40 @@ export default function RunnerGoalsPage() {
   if (loading) return <div style={{ padding: "3rem", color: "#666", textAlign: "center" }}>Cargando...</div>;
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      backgroundImage: "url('/images/fondo-objetivos.webp')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundColor: "rgba(0,0,0,0.75)",
-      backgroundBlendMode: "darken",
-    }}>
-    <div style={{ padding: "2rem", maxWidth: "48rem", margin: "0 auto" }}>
+    <>
+    <style>{`
+      .goals-bg {
+        background-image: linear-gradient(rgba(0,0,0,0.78), rgba(0,0,0,0.84)),
+                          url('/images/fondo-objetivos.webp');
+        background-size: cover;
+        background-position: center top;
+        background-attachment: scroll;
+      }
+      @media (max-width: 767px) {
+        .goals-bg { background-position: 35% top !important; }
+        .goal-card-footer { flex-wrap: wrap !important; }
+        .goal-card-footer .goal-action-btn { flex: 1 !important; justify-content: center !important; }
+      }
+    `}</style>
+
+    <div className="goals-bg" style={{ minHeight: "100vh" }}>
+    <div className="page-wrap" style={{ padding: "2.5rem 2rem", maxWidth: "48rem", margin: "0 auto" }}>
+
+      {/* Header */}
       <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "white", margin: 0 }}>🎯 Mis Objetivos</h1>
-        <p style={{ color: "#888", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+        <p style={{ color: "#a3e635", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>
+          Mi perfil
+        </p>
+        <h1 className="page-title" style={{ fontSize: "2rem", fontWeight: 900, color: "white", letterSpacing: "-0.03em", margin: 0 }}>
+          Mis Objetivos
+        </h1>
+        <p style={{ color: "#666", fontSize: "0.9rem", marginTop: "0.35rem" }}>
           Las distancias que marcaste como tus metas de carrera
         </p>
       </div>
 
       {goals.length === 0 ? (
-        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "1rem", padding: "4rem 2rem", textAlign: "center" }}>
+        <div style={{ background: "rgba(15,15,15,0.9)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid #222", borderRadius: "1rem", padding: "4rem 2rem", textAlign: "center" }}>
           <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🎯</div>
           <p style={{ color: "#666" }}>Todavía no marcaste ningún objetivo.</p>
           <p style={{ color: "#444", fontSize: "0.82rem", marginTop: "0.3rem", marginBottom: "1.25rem" }}>
@@ -166,111 +182,162 @@ export default function RunnerGoalsPage() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {goals.map((g) => {
             const ev = g.distance?.event;
             if (!ev) return null;
             const sameDay = ev.start_date === ev.end_date;
             const dateLabel = sameDay ? formatDate(ev.start_date) : `${formatDate(ev.start_date)} → ${formatDate(ev.end_date)}`;
-            const typeColor = ev.race_type === "trail" ? "#a3e635" : "#60a5fa";
+            const isTrail = ev.race_type === "trail";
+            const typeColor = isTrail ? "#a3e635" : "#60a5fa";
+            const typeBg    = isTrail ? "rgba(163,230,53,0.1)" : "rgba(96,165,250,0.1)";
+            const typeBorder= isTrail ? "rgba(163,230,53,0.25)" : "rgba(96,165,250,0.25)";
+            const hasAchievement = !!g.achievement_id;
 
             return (
-              <div key={g.id} style={{ display: "flex", flexDirection: "column", background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.875rem", overflow: "hidden" }}>
-              <div style={{
-                padding: "1.25rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem",
+              <div key={g.id} style={{
+                display: "flex", flexDirection: "column",
+                background: "rgba(12,12,12,0.88)",
+                backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+                border: `1px solid ${hasAchievement ? "rgba(163,230,53,0.2)" : "#242424"}`,
+                borderRadius: "1rem", overflow: "hidden",
               }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
-                    <span style={{ color: typeColor, fontSize: "0.68rem", fontWeight: 700, background: "rgba(255,255,255,0.05)", border: `1px solid ${typeColor}44`, borderRadius: "2rem", padding: "0.1rem 0.5rem", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                      {ev.race_type === "trail" ? "🏔 Trail" : "🏙 Calle"}
+
+                {/* ── Cuerpo ── */}
+                <div style={{ padding: "1.25rem 1.5rem" }}>
+
+                  {/* Tipo + distancia */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.6rem" }}>
+                    <span style={{
+                      color: typeColor, fontSize: "0.65rem", fontWeight: 800,
+                      background: typeBg, border: `1px solid ${typeBorder}`,
+                      borderRadius: "2rem", padding: "0.15rem 0.55rem",
+                      textTransform: "uppercase" as const, letterSpacing: "0.07em",
+                    }}>
+                      {isTrail ? "🏔 Trail" : "🏙 Calle"}
                     </span>
-                    <span style={{ color: "#a3e635", fontWeight: 800, fontSize: "1.05rem" }}>
+                    <span style={{ color: "#a3e635", fontWeight: 900, fontSize: "1.3rem", letterSpacing: "-0.01em" }}>
                       {g.distance?.label}
                     </span>
-                  </div>
-                  <p style={{ color: "white", fontWeight: 700, fontSize: "0.95rem", margin: "0 0 0.25rem 0" }}>{ev.name}</p>
-                  <div style={{ display: "flex", gap: "0.875rem", flexWrap: "wrap" }}>
-                    <span style={{ color: "#777", fontSize: "0.78rem" }}>📅 {dateLabel}</span>
-                    {ev.location && <span style={{ color: "#777", fontSize: "0.78rem" }}>📍 {ev.location}</span>}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
-                    {g.distance?.altimetryUrl && (
-                      <a href={g.distance.altimetryUrl} target="_blank" rel="noopener noreferrer"
-                        style={{ color: "#a3e635", fontSize: "0.75rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
-                        📈 Ver altimetría
-                      </a>
+                    {hasAchievement && (
+                      <span style={{ fontSize: "0.8rem", marginLeft: "auto" }} title="Resultado registrado">🏆</span>
                     )}
                   </div>
-                  {ev.discount_code
-                    ? <DiscountCode code={ev.discount_code} />
-                    : (
-                      <div style={{ marginTop: "0.625rem", display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(163,230,53,0.04)", border: "1px solid rgba(163,230,53,0.15)", borderRadius: "0.5rem", padding: "0.35rem 0.75rem" }}>
-                        <span style={{ fontSize: "0.72rem" }}>🏷</span>
-                        <span style={{ color: "#6b8f2a", fontSize: "0.75rem", fontWeight: 600 }}>Sin código de descuento disponible</span>
-                      </div>
-                    )
-                  }
+
+                  {/* Nombre del evento */}
+                  <p style={{ color: "white", fontWeight: 700, fontSize: "0.975rem", margin: "0 0 0.5rem 0", lineHeight: 1.35 }}>
+                    {ev.name}
+                  </p>
+
+                  {/* Fecha + ubicación */}
+                  <div style={{ display: "flex", gap: "0.5rem 1.25rem", flexWrap: "wrap", marginBottom: ev.discount_code || g.distance?.altimetryUrl ? "0.75rem" : 0 }}>
+                    <span style={{ color: "#666", fontSize: "0.78rem", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                      <span>📅</span>{dateLabel}
+                    </span>
+                    {ev.location && (
+                      <span style={{ color: "#666", fontSize: "0.78rem", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                        <span>📍</span>{ev.location}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Altimetría */}
+                  {g.distance?.altimetryUrl && (
+                    <a href={g.distance.altimetryUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ color: "#a3e635", fontSize: "0.75rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.625rem" }}>
+                      📈 Ver altimetría
+                    </a>
+                  )}
+
+                  {/* Código de descuento */}
+                  {ev.discount_code && <DiscountCode code={ev.discount_code} />}
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", flexShrink: 0 }}>
-                  {g.achievement_id ? (
-                    <a href="/runner/achievements" style={{ background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.25)", borderRadius: "0.4rem", color: "#a3e635", padding: "0.35rem 0.75rem", fontSize: "0.75rem", fontWeight: 700, textDecoration: "none", textAlign: "center" }}>
+
+                {/* ── Footer: acciones ── */}
+                <div className="goal-card-footer" style={{
+                  borderTop: "1px solid rgba(255,255,255,0.05)",
+                  padding: "0.75rem 1.5rem",
+                  display: "flex", alignItems: "center", gap: "0.5rem",
+                  background: "rgba(0,0,0,0.25)",
+                }}>
+                  {hasAchievement ? (
+                    <a href="/runner/achievements" className="goal-action-btn" style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                      background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.25)",
+                      borderRadius: "0.5rem", color: "#a3e635",
+                      padding: "0.5rem 1rem", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none",
+                    }}>
                       🏆 Ver logro
                     </a>
                   ) : (
                     <button
+                      className="goal-action-btn"
                       onClick={() => { setConvertingGoalId(convertingGoalId === g.id ? null : g.id); setConvertForm({ finish_time: "", position_general: "", total_general: "", position_category: "", total_category: "", category_name: "" }); }}
-                      style={{ background: "rgba(163,230,53,0.08)", border: "1px solid rgba(163,230,53,0.2)", borderRadius: "0.4rem", color: "#a3e635", padding: "0.35rem 0.75rem", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                        background: convertingGoalId === g.id ? "rgba(163,230,53,0.12)" : "rgba(163,230,53,0.08)",
+                        border: `1px solid ${convertingGoalId === g.id ? "rgba(163,230,53,0.35)" : "rgba(163,230,53,0.2)"}`,
+                        borderRadius: "0.5rem", color: "#a3e635",
+                        padding: "0.5rem 1rem", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
+                      }}
                     >
-                      🏆 Registrar resultado
+                      🏆 {convertingGoalId === g.id ? "Cancelar" : "Registrar resultado"}
                     </button>
                   )}
+
                   <button
                     onClick={() => removeGoal(g.distance_id)}
                     disabled={removing === g.distance_id}
-                    style={{ background: "transparent", border: "1px solid #2a1a1a", borderRadius: "0.4rem", color: "#774", padding: "0.35rem 0.75rem", cursor: "pointer", fontSize: "0.75rem", opacity: removing === g.distance_id ? 0.5 : 1 }}
+                    style={{
+                      marginLeft: "auto",
+                      background: "transparent", border: "1px solid rgba(255,255,255,0.07)",
+                      borderRadius: "0.5rem", color: "#555",
+                      padding: "0.5rem 0.875rem", fontSize: "0.75rem", fontWeight: 600,
+                      cursor: removing === g.distance_id ? "not-allowed" : "pointer",
+                      opacity: removing === g.distance_id ? 0.4 : 1,
+                    }}
                   >
-                    Quitar
+                    {removing === g.distance_id ? "…" : "Quitar"}
                   </button>
                 </div>
-              </div>
 
-              {/* Formulario conversión a logro */}
-              {convertingGoalId === g.id && (
-                <div style={{ borderTop: "1px solid #1a1a1a", padding: "1rem 1.5rem", background: "#0d0d0d" }}>
-                  <p style={{ color: "#a3e635", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.875rem" }}>
-                    Resultado — {g.distance?.label} {ev.name}
-                  </p>
-                  <div className="grid-3-to-1" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.65rem", marginBottom: "0.65rem" }}>
-                    {[
-                      { key: "finish_time",       label: "Tiempo",          placeholder: "3:45:22" },
-                      { key: "position_general",  label: "Pos. general",    placeholder: "42" },
-                      { key: "total_general",     label: "Total general",   placeholder: "850" },
-                      { key: "category_name",     label: "Categoría",       placeholder: "M35-39" },
-                      { key: "position_category", label: "Pos. categoría",  placeholder: "3" },
-                      { key: "total_category",    label: "Total categoría", placeholder: "45" },
-                    ].map(({ key, label, placeholder }) => (
-                      <div key={key}>
-                        <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.2rem" }}>{label}</label>
-                        <input
-                          value={convertForm[key as keyof typeof convertForm]}
-                          onChange={e => setConvertForm(prev => ({ ...prev, [key]: e.target.value }))}
-                          placeholder={placeholder}
-                          style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.4rem", padding: "0.4rem 0.6rem", color: "white", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const }}
-                        />
-                      </div>
-                    ))}
+                {/* ── Formulario: registrar resultado ── */}
+                {convertingGoalId === g.id && (
+                  <div style={{ borderTop: "1px solid #1a1a1a", padding: "1.125rem 1.5rem", background: "rgba(0,0,0,0.4)" }}>
+                    <p style={{ color: "#a3e635", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.875rem" }}>
+                      Resultado — {g.distance?.label} · {ev.name}
+                    </p>
+                    <div className="grid-3-to-1" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.65rem", marginBottom: "0.875rem" }}>
+                      {[
+                        { key: "finish_time",       label: "Tiempo",          placeholder: "3:45:22" },
+                        { key: "position_general",  label: "Pos. general",    placeholder: "42" },
+                        { key: "total_general",     label: "Total general",   placeholder: "850" },
+                        { key: "category_name",     label: "Categoría",       placeholder: "M35-39" },
+                        { key: "position_category", label: "Pos. categoría",  placeholder: "3" },
+                        { key: "total_category",    label: "Total categoría", placeholder: "45" },
+                      ].map(({ key, label, placeholder }) => (
+                        <div key={key}>
+                          <label style={{ display: "block", color: "#555", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.2rem" }}>{label}</label>
+                          <input
+                            value={convertForm[key as keyof typeof convertForm]}
+                            onChange={e => setConvertForm(prev => ({ ...prev, [key]: e.target.value }))}
+                            placeholder={placeholder}
+                            style={{ width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "0.4rem", padding: "0.4rem 0.6rem", color: "white", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                      <button onClick={() => setConvertingGoalId(null)} style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", padding: "0.4rem 0.875rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
+                        Cancelar
+                      </button>
+                      <button onClick={() => convertToAchievement(g)} disabled={convertSaving}
+                        style={{ background: convertSaving ? "#1a1a1a" : "#a3e635", border: "none", borderRadius: "0.4rem", color: convertSaving ? "#444" : "#000", padding: "0.4rem 1.1rem", fontSize: "0.78rem", fontWeight: 700, cursor: convertSaving ? "not-allowed" : "pointer" }}>
+                        {convertSaving ? "Guardando..." : "Confirmar logro"}
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                    <button onClick={() => setConvertingGoalId(null)} style={{ background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.4rem", color: "#555", padding: "0.4rem 0.875rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
-                      Cancelar
-                    </button>
-                    <button onClick={() => convertToAchievement(g)} disabled={convertSaving}
-                      style={{ background: convertSaving ? "#1a1a1a" : "#a3e635", border: "none", borderRadius: "0.4rem", color: convertSaving ? "#444" : "#000", padding: "0.4rem 1.1rem", fontSize: "0.78rem", fontWeight: 700, cursor: convertSaving ? "not-allowed" : "pointer" }}>
-                      {convertSaving ? "Guardando..." : "Confirmar logro"}
-                    </button>
-                  </div>
-                </div>
-              )}
+                )}
               </div>
             );
           })}
@@ -278,5 +345,6 @@ export default function RunnerGoalsPage() {
       )}
     </div>
     </div>
+    </>
   );
 }
