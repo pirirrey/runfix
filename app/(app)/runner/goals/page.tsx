@@ -262,26 +262,41 @@ export default function RunnerGoalsPage() {
                 }}>
                   {hasAchievement ? (
                     <a href="/runner/achievements" className="goal-action-btn" style={{
-                      display: "inline-flex", alignItems: "center", gap: "0.4rem",
-                      background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.25)",
-                      borderRadius: "0.5rem", color: "#a3e635",
-                      padding: "0.5rem 1rem", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none",
+                      display: "inline-flex", alignItems: "center", gap: "0.5rem",
+                      background: "#a3e635", border: "none",
+                      borderRadius: "0.625rem", color: "#000",
+                      padding: "0.65rem 1.25rem", fontSize: "0.875rem", fontWeight: 700,
+                      textDecoration: "none", whiteSpace: "nowrap" as const,
                     }}>
                       🏆 Ver logro
                     </a>
+                  ) : convertingGoalId === g.id ? (
+                    <button
+                      className="goal-action-btn"
+                      onClick={() => setConvertingGoalId(null)}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: "0.5rem",
+                        background: "transparent", border: "1px solid #2a2a2a",
+                        borderRadius: "0.625rem", color: "#555",
+                        padding: "0.65rem 1.25rem", fontSize: "0.875rem", fontWeight: 700,
+                        cursor: "pointer", whiteSpace: "nowrap" as const,
+                      }}
+                    >
+                      Cancelar
+                    </button>
                   ) : (
                     <button
                       className="goal-action-btn"
-                      onClick={() => { setConvertingGoalId(convertingGoalId === g.id ? null : g.id); setConvertForm({ finish_time: "", position_general: "", total_general: "", position_category: "", total_category: "", category_name: "" }); }}
+                      onClick={() => { setConvertingGoalId(g.id); setConvertForm({ finish_time: "", position_general: "", total_general: "", position_category: "", total_category: "", category_name: "" }); }}
                       style={{
-                        display: "inline-flex", alignItems: "center", gap: "0.4rem",
-                        background: convertingGoalId === g.id ? "rgba(163,230,53,0.12)" : "rgba(163,230,53,0.08)",
-                        border: `1px solid ${convertingGoalId === g.id ? "rgba(163,230,53,0.35)" : "rgba(163,230,53,0.2)"}`,
-                        borderRadius: "0.5rem", color: "#a3e635",
-                        padding: "0.5rem 1rem", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
+                        display: "inline-flex", alignItems: "center", gap: "0.5rem",
+                        background: "#a3e635", border: "none",
+                        borderRadius: "0.625rem", color: "#000",
+                        padding: "0.65rem 1.25rem", fontSize: "0.875rem", fontWeight: 700,
+                        cursor: "pointer", whiteSpace: "nowrap" as const,
                       }}
                     >
-                      🏆 {convertingGoalId === g.id ? "Cancelar" : "Registrar resultado"}
+                      🏆 Registrar resultado
                     </button>
                   )}
 
