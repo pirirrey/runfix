@@ -150,12 +150,21 @@ export default function AchievementsPage() {
             Tus resultados de carrera
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          style={{ background: "#a3e635", border: "none", borderRadius: "0.5rem", color: "#000", fontWeight: 700, fontSize: "0.875rem", padding: "0.6rem 1.25rem", cursor: "pointer" }}
-        >
-          {showForm ? "Cancelar" : "+ Registrar logro"}
-        </button>
+        {showForm ? (
+          <button
+            onClick={() => setShowForm(false)}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "transparent", border: "1px solid #2a2a2a", borderRadius: "0.625rem", color: "#555", fontWeight: 700, fontSize: "0.875rem", padding: "0.65rem 1.25rem", cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            Cancelar
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowForm(true)}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "#a3e635", border: "none", borderRadius: "0.625rem", color: "#000", fontWeight: 700, fontSize: "0.875rem", padding: "0.65rem 1.25rem", cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            <span>+</span> Registrar logro
+          </button>
+        )}
       </div>
 
       {/* Formulario nuevo logro */}
