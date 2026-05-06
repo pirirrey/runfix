@@ -84,34 +84,6 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
   return (
     <>
       <style>{`
-        /* ── Hamburger button (solo mobile) ── */
-        .sidebar-hamburger {
-          display: none;
-          position: fixed;
-          top: 0.75rem;
-          left: 0.75rem;
-          z-index: 1001;
-          background: #111;
-          border: 1px solid #2a2a2a;
-          border-radius: 0.5rem;
-          width: 2.5rem;
-          height: 2.5rem;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: #aaa;
-          font-size: 1.25rem;
-          line-height: 1;
-          padding: 0;
-          flex-shrink: 0;
-          transition: background 0.15s, border-color 0.15s;
-        }
-        .sidebar-hamburger:hover {
-          background: #1a1a1a;
-          border-color: #3a3a3a;
-          color: #ccc;
-        }
-
         /* ── Overlay backdrop ── */
         .sidebar-overlay {
           display: none;
@@ -154,43 +126,51 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
           color: #fff !important;
         }
 
-        /* ── Close button dentro del sidebar (mobile) ── */
-        .sidebar-close-btn {
+        /* ── Barra superior mobile (reemplaza el botón flotante) ── */
+        .mobile-topbar {
           display: none;
-          position: absolute;
-          top: 0.875rem;
-          right: 0.875rem;
+          position: fixed;
+          top: 0; left: 0; right: 0;
+          height: 3.25rem;
+          background: #0f0f0f;
+          border-bottom: 1px solid #1e1e1e;
+          align-items: center;
+          padding: 0 0.875rem;
+          gap: 0.75rem;
+          z-index: 1001;
+        }
+        .mobile-topbar-btn {
           background: #1a1a1a;
           border: 1px solid #2a2a2a;
-          border-radius: 0.375rem;
-          width: 2rem;
-          height: 2rem;
+          border-radius: 0.5rem;
+          color: #aaa;
+          font-size: 1.15rem;
+          cursor: pointer;
+          width: 2.25rem;
+          height: 2.25rem;
+          display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
-          color: #777;
-          font-size: 1rem;
+          flex-shrink: 0;
+          transition: background 0.15s;
           line-height: 1;
           padding: 0;
-          transition: background 0.15s;
         }
-        .sidebar-close-btn:hover {
-          background: #222;
-          color: #aaa;
+        .mobile-topbar-btn:hover { background: #222; color: #ccc; }
+        .mobile-topbar-logo {
+          font-size: 1rem;
+          font-weight: 900;
+          color: #a3e635;
+          letter-spacing: -0.02em;
+          font-family: inherit;
         }
 
         /* ── Mobile responsive ── */
         @media (max-width: 767px) {
-          .sidebar-hamburger {
-            display: flex;
-          }
-          .sidebar-hamburger.menu-open {
-            display: none;
-          }
+          .mobile-topbar { display: flex; }
           .app-sidebar {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             height: 100vh;
             width: 15rem;
             transform: translateX(-100%);
@@ -198,35 +178,28 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
           .app-sidebar.open {
             transform: translateX(0);
           }
-          .sidebar-close-btn {
-            display: flex;
-          }
-          /* Cuando el sidebar está abierto, el logo necesita espacio para no quedar
-             aplastado contra el borde (el close-btn es absolute top-right) */
-          .app-sidebar.open .sidebar-logo {
-            padding-left: 0.25rem;
-          }
-          /* Padding superior para que el contenido no quede bajo el botón hamburguesa */
+          /* El contenido principal cede espacio a la topbar */
           .app-main {
-            padding-top: 3.75rem;
+            padding-top: 3.25rem;
           }
         }
 
         @media (min-width: 768px) {
-          .app-sidebar {
-            transform: none !important;
-          }
+          .app-sidebar { transform: none !important; }
         }
       `}</style>
 
-      {/* ── Botón hamburguesa (mobile) — se oculta cuando el menú está abierto ── */}
-      <button
-        className={`sidebar-hamburger${open ? " menu-open" : ""}`}
-        onClick={() => setOpen(true)}
-        aria-label="Abrir menú"
-      >
-        ☰
-      </button>
+      {/* ── Barra superior mobile ── */}
+      <div className="mobile-topbar">
+        <button
+          className="mobile-topbar-btn"
+          onClick={() => setOpen(v => !v)}
+          aria-label={open ? "Cerrar menú" : "Abrir menú"}
+        >
+          {open ? "✕" : "☰"}
+        </button>
+        <span className="mobile-topbar-logo">Runfix</span>
+      </div>
 
       {/* ── Overlay backdrop ── */}
       <div
@@ -237,17 +210,8 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
       {/* ── Sidebar ── */}
       <aside className={`app-sidebar${open ? " open" : ""}`}>
 
-        {/* Botón cerrar (mobile) */}
-        <button
-          className="sidebar-close-btn"
-          onClick={() => setOpen(false)}
-          aria-label="Cerrar menú"
-        >
-          ✕
-        </button>
-
         {/* Logo */}
-        <div className="sidebar-logo" style={{ padding: "0.25rem 0.5rem", marginBottom: "0.25rem" }}>
+        <div style={{ padding: "0.25rem 0.5rem", marginBottom: "0.25rem" }}>
           <img src="/images/runfix-dark.svg" alt="Runfix" style={{ height: "1.75rem", width: "auto" }} />
         </div>
 
