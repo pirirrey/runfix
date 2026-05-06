@@ -106,11 +106,13 @@ export function CreateEventDialog() {
       <button
         onClick={() => setOpen(true)}
         style={{
-          background: "#a3e635", color: "#000", border: "none", borderRadius: "0.5rem",
-          padding: "0.6rem 1.25rem", fontWeight: 700, fontSize: "0.875rem", cursor: "pointer",
+          display: "inline-flex", alignItems: "center", gap: "0.5rem",
+          background: "#a3e635", color: "#000", border: "none", borderRadius: "0.625rem",
+          padding: "0.65rem 1.25rem", fontWeight: 700, fontSize: "0.875rem",
+          cursor: "pointer", whiteSpace: "nowrap",
         }}
       >
-        + Nuevo evento
+        <span>+</span> Nuevo evento
       </button>
 
       {open && (

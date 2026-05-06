@@ -30,17 +30,22 @@ export default async function CoachEventsPage() {
     new Date(d + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "56rem", margin: "0 auto" }}>
+    <div className="page-wrap" style={{ padding: "2rem", maxWidth: "56rem", margin: "0 auto" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", gap: "1rem" }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "white", margin: 0 }}>🏁 Eventos</h1>
-          <p style={{ color: "#888", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+          <p style={{ color: "#a3e635", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>
+            Panel de entrenador
+          </p>
+          <h1 className="page-title" style={{ fontSize: "2rem", fontWeight: 900, color: "white", letterSpacing: "-0.03em", margin: 0 }}>Eventos</h1>
+          <p style={{ color: "#666", fontSize: "0.9rem", marginTop: "0.35rem" }}>
             Carreras publicadas para tus runners
           </p>
         </div>
-        <CreateEventDialog />
+        <div className="page-header-actions" style={{ display: "flex", flexShrink: 0 }}>
+          <CreateEventDialog />
+        </div>
       </div>
 
       {/* Lista */}
