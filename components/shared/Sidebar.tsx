@@ -157,14 +157,6 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
           padding: 0;
         }
         .mobile-topbar-btn:hover { background: #222; color: #ccc; }
-        .mobile-topbar-logo {
-          font-size: 1rem;
-          font-weight: 900;
-          color: #a3e635;
-          letter-spacing: -0.02em;
-          font-family: inherit;
-        }
-
         /* ── Mobile responsive ── */
         @media (max-width: 767px) {
           .mobile-topbar { display: flex; }
@@ -198,7 +190,7 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
         >
           {open ? "✕" : "☰"}
         </button>
-        <span className="mobile-topbar-logo">Runfix</span>
+        <img src="/images/runfix-dark.svg" alt="Runfix" style={{ height: "1.5rem", width: "auto" }} />
       </div>
 
       {/* ── Overlay backdrop ── */}
