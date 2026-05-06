@@ -57,9 +57,13 @@ body {
 
   /* Botones/acciones del header (nueva sede, nuevo equipo, etc.) */
   .page-header-actions {
-    align-items: flex-start !important;
     width: 100% !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  /* El botón principal de acción ocupa todo el ancho */
+  .page-header-actions button {
+    width: 100% !important;
+    justify-content: center !important;
   }
 }
