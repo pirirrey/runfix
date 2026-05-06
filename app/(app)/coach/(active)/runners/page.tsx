@@ -370,6 +370,25 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
 
   return (
     <>
+    <style>{`
+      @media (max-width: 767px) {
+        /* Código de invitación */
+        .invite-card   { flex-direction: column !important; }
+        .invite-code-row { flex-wrap: wrap !important; gap: 0.5rem !important; }
+        .invite-right  { flex-direction: row !important; align-items: center !important;
+                         justify-content: space-between !important; width: 100% !important; }
+
+        /* Runners: ocultar header de tabla, convertir filas en cards */
+        .runners-header { display: none !important; }
+        .runner-row     { grid-template-columns: 1fr !important; gap: 0 !important; padding: 1rem !important; }
+        .runner-teams   { padding-right: 0 !important; padding-top: 0.625rem !important;
+                          border-top: 1px solid #1a1a1a !important; }
+        .runner-actions { justify-content: flex-start !important; flex-wrap: wrap !important;
+                          padding-top: 0.625rem !important; border-top: 1px solid #1a1a1a !important; }
+        .runner-actions > button { flex: 1 1 auto !important; justify-content: center !important; min-width: 4.5rem !important; }
+        .runner-section-label { display: block !important; }
+      }
+    `}</style>
     <main className="page-wrap" style={{ padding: "2rem", maxWidth: "64rem", margin: "0 auto" }}>
 
       {/* Header */}
@@ -453,10 +472,10 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
       })()}
 
       {/* Código de invitación */}
-      <div style={{ background: "#111", border: "1px solid #222", borderRadius: "0.75rem", padding: "1.25rem 1.5rem", marginBottom: "2rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+      <div className="invite-card" style={{ background: "#111", border: "1px solid #222", borderRadius: "0.75rem", padding: "1.25rem 1.5rem", marginBottom: "2rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <p style={{ color: "#555", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>Tu código de entrenador</p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.75rem" }}>
+          <div className="invite-code-row" style={{ display: "inline-flex", alignItems: "center", gap: "0.75rem" }}>
             <span style={{ color: "#a3e635", fontSize: "1.75rem", fontWeight: 900, letterSpacing: "0.2em", fontFamily: "monospace" }}>
               {inviteCode || "—"}
             </span>
@@ -468,7 +487,7 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
             </button>
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
+        <div className="invite-right" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
           <span style={{ color: "#444", fontSize: "0.78rem" }}>
             {runners.length} runner{runners.length !== 1 ? "s" : ""} en tu pool
           </span>
@@ -615,9 +634,9 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
           <p style={{ color: "#666", fontSize: "0.9rem" }}>No hay runners que coincidan con &quot;{search}&quot;</p>
         </div>
       ) : (
-        <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.75rem", overflow: "hidden" }}>
+        <div className="runners-table" style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: "0.75rem", overflow: "hidden" }}>
           {/* Encabezado tabla */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px", gap: "0", borderBottom: "1px solid #1e1e1e", padding: "0.5rem 1.25rem", background: "#0d0d0d" }}>
+          <div className="runners-header" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px", gap: "0", borderBottom: "1px solid #1e1e1e", padding: "0.5rem 1.25rem", background: "#0d0d0d" }}>
             {["Runner", "Equipos", "Acciones"].map((h) => (
               <span key={h} style={{ color: "#3a3a3a", fontSize: "0.67rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>{h}</span>
             ))}
@@ -631,7 +650,7 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
             return (
               <div key={cr.id} style={{ borderBottom: idx < filtered.length - 1 ? "1px solid #161616" : "none" }}>
                 {/* Fila principal */}
-                <div style={{
+                <div className="runner-row" style={{
                   display: "grid", gridTemplateColumns: "1fr 1fr 160px",
                   gap: "0", padding: "0.55rem 1.25rem", alignItems: "center",
                   background: cr.suspended ? "rgba(180,30,30,0.03)" : "transparent",
@@ -701,7 +720,8 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
                   </div>
 
                   {/* Equipos (chips toggleables) */}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", paddingRight: "0.75rem" }}>
+                  <div className="runner-teams" style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", paddingRight: "0.75rem" }}>
+                    <span className="runner-section-label" style={{ display: "none", width: "100%", color: "#333", fontSize: "0.62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.15rem" }}>Equipos</span>
                     {teams.length === 0 ? (
                       <span style={{ color: "#333", fontSize: "0.75rem" }}>Sin equipos creados</span>
                     ) : teams.map((team) => {
@@ -716,7 +736,8 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
                   </div>
 
                   {/* Acciones */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", justifyContent: "flex-end" }}>
+                  <div className="runner-actions" style={{ display: "flex", alignItems: "center", gap: "0.4rem", justifyContent: "flex-end" }}>
+                    <span className="runner-section-label" style={{ display: "none", width: "100%", color: "#333", fontSize: "0.62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.15rem" }}>Acciones</span>
                     <button
                       onClick={() => toggleSuspend(cr.runner.id)}
                       disabled={suspending === cr.runner.id}
