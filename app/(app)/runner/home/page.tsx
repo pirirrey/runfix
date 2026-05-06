@@ -93,7 +93,12 @@ export default async function RunnerHomePage() {
       backgroundPosition: "center 30%",
       backgroundAttachment: "fixed",
     }}>
-    <div style={{ padding: "2.5rem 2rem", maxWidth: "42rem" }}>
+    <style>{`
+      @media (max-width: 767px) {
+        .runner-home-wrap { padding: 1.25rem 1rem !important; }
+      }
+    `}</style>
+    <div className="runner-home-wrap" style={{ padding: "2.5rem 2rem", maxWidth: "42rem" }}>
 
       {/* Saludo */}
       <div style={{ marginBottom: "2.5rem" }}>

@@ -22,3 +22,44 @@ body {
   color: #a3e635 !important;
   border-bottom-color: rgba(163,230,53,0.4) !important;
 }
+
+/* ── Responsive: grid utilities ─────────────────────────────── */
+/* 4 cols → 2 cols on mobile (stats grids) */
+.grid-4-to-2 { display: grid; grid-template-columns: repeat(4, 1fr); }
+/* 3 cols → 1 col on mobile (form fields) */
+.grid-3-to-1 { display: grid; grid-template-columns: repeat(3, 1fr); }
+/* 2 cols → 1 col on mobile (form fields) */
+.grid-2-to-1 { display: grid; grid-template-columns: repeat(2, 1fr); }
+
+@media (max-width: 767px) {
+  .grid-4-to-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3-to-1 { grid-template-columns: 1fr !important; }
+  .grid-2-to-1 { grid-template-columns: 1fr !important; }
+}
+
+/* ── Responsive: page headers ───────────────────────────────── */
+@media (max-width: 767px) {
+  /* Wrapper principal de cada sección */
+  .page-wrap {
+    padding: 1rem !important;
+  }
+
+  /* Header: título a la izquierda, acciones a la derecha → apila en mobile */
+  .page-header {
+    flex-direction: column !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* El h1 principal de cada sección */
+  .page-title {
+    font-size: 1.5rem !important;
+  }
+
+  /* Botones/acciones del header (nueva sede, nuevo equipo, etc.) */
+  .page-header-actions {
+    align-items: flex-start !important;
+    width: 100% !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+}

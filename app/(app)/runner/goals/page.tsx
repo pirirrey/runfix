@@ -240,7 +240,7 @@ export default function RunnerGoalsPage() {
                   <p style={{ color: "#a3e635", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.875rem" }}>
                     Resultado — {g.distance?.label} {ev.name}
                   </p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.65rem", marginBottom: "0.65rem" }}>
+                  <div className="grid-3-to-1" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.65rem", marginBottom: "0.65rem" }}>
                     {[
                       { key: "finish_time",       label: "Tiempo",          placeholder: "3:45:22" },
                       { key: "position_general",  label: "Pos. general",    placeholder: "42" },

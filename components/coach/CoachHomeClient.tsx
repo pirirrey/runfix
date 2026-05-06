@@ -61,10 +61,19 @@ export function CoachHomeClient({ profile, stats }: { profile: Profile; stats: S
   ];
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "56rem", margin: "0 auto" }}>
+    <div className="coach-home-wrap" style={{ padding: "2rem", maxWidth: "56rem", margin: "0 auto" }}>
+      <style>{`
+        @media (max-width: 767px) {
+          .coach-home-wrap   { padding: 1rem !important; }
+          .coach-brand-card  { padding: 1.25rem !important; padding-right: 7rem !important; gap: 1rem !important; }
+          .coach-team-logo   { width: 4.5rem !important; height: 4.5rem !important; }
+          .coach-team-name   { font-size: 1.4rem !important; }
+          .coach-stats-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
 
       {/* ── BRAND CARD ── */}
-      <div style={{
+      <div className="coach-brand-card" style={{
         background: "linear-gradient(135deg, #111 0%, #161a10 100%)",
         border: "1px solid #2a2a1a",
         borderRadius: "1.25rem",
@@ -86,7 +95,7 @@ export function CoachHomeClient({ profile, stats }: { profile: Profile; stats: S
         }} />
 
         {/* Logo */}
-        <div style={{
+        <div className="coach-team-logo" style={{
           width: "7rem", height: "7rem", borderRadius: "1rem", flexShrink: 0,
           border: profile.logoUrl ? "2px solid rgba(163,230,53,0.3)" : "2px dashed #333",
           background: profile.logoUrl ? "transparent" : "#1a1a1a",
@@ -106,7 +115,7 @@ export function CoachHomeClient({ profile, stats }: { profile: Profile; stats: S
 
         {/* Team info */}
         <div style={{ flex: 1, minWidth: "12rem" }}>
-          <h1 style={{ color: "white", fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 0.35rem 0" }}>
+          <h1 className="coach-team-name" style={{ color: "white", fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 0.35rem 0" }}>
             {displayName}
           </h1>
           {profile.team_location && (
@@ -145,7 +154,7 @@ export function CoachHomeClient({ profile, stats }: { profile: Profile; stats: S
       </div>
 
       {/* ── STATS ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.75rem" }}>
+      <div className="coach-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.75rem" }}>
         {statCards.map(s => {
           const limited   = atLimit(s.value, s.max);
           const borderColor = limited ? "rgba(245,158,11,0.3)" : "#1e1e1e";

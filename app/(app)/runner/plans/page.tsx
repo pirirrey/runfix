@@ -158,7 +158,7 @@ export default async function RunnerPlansPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
-      <div style={{ padding: "2.5rem 2rem", maxWidth: "56rem", margin: "0 auto" }}>
+      <div className="page-wrap" style={{ padding: "2.5rem 2rem", maxWidth: "56rem", margin: "0 auto" }}>
 
         {/* Header */}
         <div style={{ marginBottom: "2.5rem" }}>

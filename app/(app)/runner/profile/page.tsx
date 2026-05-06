@@ -197,7 +197,7 @@ export default function RunnerProfilePage() {
               <form onSubmit={handleSaveProfile} style={{ padding: "0 1.5rem 1.5rem 1.5rem", borderTop: "1px solid #1a1a1a" }}>
                 <div style={{ height: "1.25rem" }} />
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                <div className="grid-2-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
                   <div>
                     <label style={labelStyle}>Nombre</label>
                     <input value={profile.first_name ?? ""} onChange={set("first_name")} placeholder="Juan" style={inputStyle} />
@@ -208,7 +208,7 @@ export default function RunnerProfilePage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                <div className="grid-2-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
                   <div>
                     <label style={labelStyle}>Sexo</label>
                     <select value={profile.gender ?? ""} onChange={set("gender")} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -242,7 +242,7 @@ export default function RunnerProfilePage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                <div className="grid-3-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
                   <div>
                     <label style={labelStyle}>Piso</label>
                     <input value={profile.address_floor ?? ""} onChange={set("address_floor")} placeholder="3" style={inputStyle} />
@@ -359,7 +359,7 @@ export default function RunnerProfilePage() {
 
                 <form onSubmit={handleUploadCert} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: "0.625rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <p style={{ color: "#aaa", fontSize: "0.82rem", fontWeight: 700, margin: 0 }}>Cargar nuevo certificado</p>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div className="grid-2-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                     <div>
                       <label style={labelStyle}>Archivo (PDF o imagen) *</label>
                       <div style={{ border: `2px dashed ${certFile ? "rgba(163,230,53,0.4)" : "#222"}`, borderRadius: "0.5rem", padding: "0.875rem", textAlign: "center", background: certFile ? "rgba(163,230,53,0.04)" : "transparent", position: "relative", cursor: "pointer" }}>

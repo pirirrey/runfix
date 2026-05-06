@@ -166,7 +166,7 @@ export default function AchievementsPage() {
           </p>
 
           {/* Nombre + fecha */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
+          <div className="grid-2-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
             <div>
               <label style={labelStyle}>Nombre de la carrera *</label>
               <input value={form.race_name} onChange={e => setField("race_name", e.target.value)} placeholder="Maratón de Buenos Aires" style={inputStyle} />
@@ -178,7 +178,7 @@ export default function AchievementsPage() {
           </div>
 
           {/* Distancia + tiempo */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
+          <div className="grid-2-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
             <div>
               <label style={labelStyle}>Distancia</label>
               <input value={form.distance_label} onChange={e => setField("distance_label", e.target.value)} placeholder="42K, 21K, 10K..." style={inputStyle} />
@@ -191,7 +191,7 @@ export default function AchievementsPage() {
 
           {/* Posición general */}
           <p style={{ color: "#444", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.5rem" }}>Posición general</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
+          <div className="grid-2-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
             <div>
               <label style={labelStyle}>Posición</label>
               <input type="number" min="1" value={form.position_general} onChange={e => setField("position_general", e.target.value)} placeholder="42" style={inputStyle} />
@@ -204,7 +204,7 @@ export default function AchievementsPage() {
 
           {/* Posición por categoría */}
           <p style={{ color: "#444", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "0.5rem" }}>Posición por categoría</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
+          <div className="grid-3-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
             <div>
               <label style={labelStyle}>Categoría</label>
               <input value={form.category_name} onChange={e => setField("category_name", e.target.value)} placeholder="M35-39" style={inputStyle} />
@@ -220,7 +220,7 @@ export default function AchievementsPage() {
           </div>
 
           {/* Archivos */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
+          <div className="grid-2-to-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.875rem", marginBottom: "0.875rem" }}>
             <FileDropZone label="Certificado (PDF/imagen)" file={certFile} onFile={setCertFile} icon="📄" />
             <FileDropZone label="Foto del evento" file={photoFile} onFile={setPhotoFile} icon="📷" />
           </div>

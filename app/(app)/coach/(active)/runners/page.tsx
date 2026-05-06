@@ -370,7 +370,7 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
 
   return (
     <>
-    <main style={{ padding: "2rem", maxWidth: "64rem", margin: "0 auto" }}>
+    <main className="page-wrap" style={{ padding: "2rem", maxWidth: "64rem", margin: "0 auto" }}>
 
       {/* Header */}
       {(() => {
@@ -382,7 +382,7 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
 
         return (
           <>
-            <div style={{
+            <div className="page-header" style={{
               display: "flex", alignItems: "flex-start",
               justifyContent: "space-between", marginBottom: "2rem",
               gap: "1rem",
@@ -391,7 +391,7 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
                 <p style={{ color: "#a3e635", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.4rem" }}>
                   Panel de entrenador
                 </p>
-                <h1 style={{ color: "white", fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0 }}>
+                <h1 className="page-title" style={{ color: "white", fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0 }}>
                   Mis Runners
                 </h1>
                 <p style={{ color: "#666", fontSize: "0.9rem", marginTop: "0.35rem" }}>
@@ -401,7 +401,7 @@ Una vez registrado, ingresá a "Unirse a un Running Team" y pegá el código par
 
               {/* Contador de uso */}
               {limits.maxRunners !== null && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", flexShrink: 0, paddingTop: "0.25rem" }}>
+                <div className="page-header-actions" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", flexShrink: 0, paddingTop: "0.25rem" }}>
                   <span style={{
                     color: atLimit ? "#f59e0b" : nearLimit ? "#f59e0b" : "#555",
                     fontSize: "0.85rem", fontWeight: 600,

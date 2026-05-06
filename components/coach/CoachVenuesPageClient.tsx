@@ -18,11 +18,11 @@ export function CoachVenuesPageClient({ initialVenues, planId }: Props) {
   const atLimit   = limits.maxVenues !== null && venueCount >= limits.maxVenues;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", padding: "2.5rem" }}>
+    <div className="page-wrap" style={{ minHeight: "100vh", background: "#0a0a0a", padding: "2.5rem" }}>
       <div style={{ maxWidth: "52rem", margin: "0 auto" }}>
 
         {/* Header */}
-        <div style={{
+        <div className="page-header" style={{
           display: "flex", alignItems: "flex-start",
           justifyContent: "space-between", marginBottom: "2.5rem",
           gap: "1rem",
@@ -34,7 +34,7 @@ export function CoachVenuesPageClient({ initialVenues, planId }: Props) {
             }}>
               Panel de entrenador
             </p>
-            <h1 style={{ color: "white", fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0 }}>
+            <h1 className="page-title" style={{ color: "white", fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.03em", margin: 0 }}>
               Mis Sedes
             </h1>
             <p style={{ color: "#666", fontSize: "0.9rem", marginTop: "0.35rem" }}>
@@ -43,7 +43,7 @@ export function CoachVenuesPageClient({ initialVenues, planId }: Props) {
           </div>
 
           {/* Botón Nueva Sede */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", flexShrink: 0 }}>
+          <div className="page-header-actions" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", flexShrink: 0 }}>
             <button
               onClick={() => !atLimit && panelRef.current?.openNew()}
               disabled={atLimit}

@@ -251,12 +251,70 @@ function VenueCard({
       background: "#111", border: "1px solid #1e1e1e",
       borderRadius: "0.875rem", overflow: "hidden",
     }}>
+      <style>{`
+        .venue-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.875rem 1.25rem;
+          gap: 0.5rem;
+        }
+        .venue-header-actions {
+          display: flex;
+          gap: 0.4rem;
+          flex-shrink: 0;
+        }
+        .venue-session-row {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          background: #161616;
+          border: 1px solid #1e1e1e;
+          border-radius: 0.5rem;
+          padding: 0.5rem 0.875rem;
+        }
+        .venue-session-location {
+          color: #666;
+          font-size: 0.82rem;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        @media (max-width: 767px) {
+          .venue-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.625rem;
+          }
+          .venue-header-actions {
+            width: 100%;
+            flex-wrap: wrap;
+          }
+          .venue-header-actions button {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.68rem !important;
+            padding: 0.35rem 0.4rem !important;
+            justify-content: center;
+          }
+          .venue-session-row {
+            flex-wrap: wrap;
+            gap: 0.4rem;
+          }
+          .venue-session-location {
+            width: 100%;
+            white-space: normal;
+            flex: none;
+          }
+        }
+      `}</style>
+
       {/* Header de sede */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0.875rem 1.25rem",
-        borderBottom: sessions.length > 0 || showForm ? "1px solid #1a1a1a" : "none",
-      }}>
+      <div
+        className="venue-header"
+        style={{ borderBottom: sessions.length > 0 || showForm ? "1px solid #1a1a1a" : "none" }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: "1rem", flexShrink: 0 }}>📍</span>
           <span style={{ color: "white", fontWeight: 700, fontSize: "0.92rem" }}>
@@ -293,7 +351,7 @@ function VenueCard({
             {venue.runner_selectable ? "👁 Visible" : "🔒 Privada"}
           </span>
         </div>
-        <div style={{ display: "flex", gap: "0.4rem", flexShrink: 0 }}>
+        <div className="venue-header-actions">
           {/* Toggle seleccionable por runner */}
           <button
             onClick={handleToggleSelectable}
@@ -410,11 +468,7 @@ function VenueCard({
               </div>
             ) : (
               /* ── Fila normal ── */
-              <div key={s.id} style={{
-                display: "flex", alignItems: "center", gap: "0.75rem",
-                background: "#161616", border: "1px solid #1e1e1e",
-                borderRadius: "0.5rem", padding: "0.5rem 0.875rem",
-              }}>
+              <div key={s.id} className="venue-session-row">
                 {/* Días */}
                 <div style={{ display: "flex", gap: "0.25rem", flexShrink: 0 }}>
                   {[...s.days].sort((a, b) => a - b).map(d => (
@@ -434,7 +488,7 @@ function VenueCard({
                   🕐 {formatTime(s.start_time)}
                 </span>
 
-                <span style={{ color: "#666", fontSize: "0.82rem", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span className="venue-session-location">
                   {s.location}
                 </span>
 

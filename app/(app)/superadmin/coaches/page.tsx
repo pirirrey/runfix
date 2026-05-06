@@ -61,7 +61,7 @@ export default async function SuperadminCoachesPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "2.5rem" }}>
+      <div className="grid-4-to-2" style={{ gap: "1rem", marginBottom: "2.5rem" }}>
         {[
           { label: "Pendientes",  value: pending.length,   color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.2)", sublabel: "de activación inicial" },
           { label: "Activos",      value: approved.length,  color: "#a3e635", bg: "rgba(163,230,53,0.08)",  border: "rgba(163,230,53,0.2)"  },
