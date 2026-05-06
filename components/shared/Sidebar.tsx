@@ -184,6 +184,9 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
           .sidebar-hamburger {
             display: flex;
           }
+          .sidebar-hamburger.menu-open {
+            display: none;
+          }
           .app-sidebar {
             position: fixed;
             top: 0;
@@ -198,6 +201,11 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
           .sidebar-close-btn {
             display: flex;
           }
+          /* Cuando el sidebar está abierto, el logo necesita espacio para no quedar
+             aplastado contra el borde (el close-btn es absolute top-right) */
+          .app-sidebar.open .sidebar-logo {
+            padding-left: 0.25rem;
+          }
           /* Padding superior para que el contenido no quede bajo el botón hamburguesa */
           .app-main {
             padding-top: 3.75rem;
@@ -211,9 +219,9 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
         }
       `}</style>
 
-      {/* ── Botón hamburguesa (mobile) ── */}
+      {/* ── Botón hamburguesa (mobile) — se oculta cuando el menú está abierto ── */}
       <button
-        className="sidebar-hamburger"
+        className={`sidebar-hamburger${open ? " menu-open" : ""}`}
         onClick={() => setOpen(true)}
         aria-label="Abrir menú"
       >
@@ -239,7 +247,7 @@ export function Sidebar({ role, fullName, email }: SidebarProps) {
         </button>
 
         {/* Logo */}
-        <div style={{ padding: "0.25rem 0.5rem", marginBottom: "0.25rem" }}>
+        <div className="sidebar-logo" style={{ padding: "0.25rem 0.5rem", marginBottom: "0.25rem" }}>
           <img src="/images/runfix-dark.svg" alt="Runfix" style={{ height: "1.75rem", width: "auto" }} />
         </div>
 
