@@ -27,10 +27,15 @@ export async function PATCH(
   if (body.file_name !== undefined) updates.file_name = body.file_name;
   if (body.file_size !== undefined) updates.file_size = body.file_size;
 
-  const { error } = await supabase.from("training_plans").update(updates).eq("id", planId);
+  const { data: updated, error } = await supabase
+    .from("training_plans")
+    .update(updates)
+    .eq("id", planId)
+    .select("id, valid_from, valid_until, storage_path, file_name, file_size, notes")
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json(updated);
 }
 
 export async function DELETE(

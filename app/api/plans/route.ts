@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       file_size,
       notes: notes ?? null,
     })
-    .select("id")
+    .select("id, valid_from, valid_until, storage_path, file_name, file_size, notes")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
